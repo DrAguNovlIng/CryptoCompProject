@@ -31,8 +31,8 @@ fn main() {
 
     // To save time, we have already generated a (safe-prime) group and saved it in a file
     // To create a new group, uncomment the line below:
-    //Group::new(512).write_group_to_file("group128.txt");
-    let common_group = Group::new_from_file("group512.txt");
+    Group::new(512).write_group_to_file("group512new.txt");
+    let common_group = Group::new_from_file("group512new.txt");
 
     // Tests for every combination of inputs, using the implementation example presented in the assignment exercise
     

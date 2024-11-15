@@ -9,7 +9,7 @@ fn el_gamal_correctness_test() {
 
     let common_group = Group::new_from_file("group512.txt");
     let elgamal = ElGamal::new(common_group.clone());
-    let message = "Some small message"; //Note message must be smaller than q
+    let message = "random message"; //Note message must be smaller than q
     let m = BigInt::from_bytes_be(num_bigint::Sign::Plus,message.as_bytes()) % common_group.p;
 
     let sk = elgamal.gen_sk();
@@ -51,7 +51,7 @@ fn full_truth_table_test() {
     ];
 
     // To save time, we have already generated a (safe-prime) group and saved it in a file
-    let common_group = Group::new_from_file("group512.txt");
+    let common_group = Group::new_from_file("group512new.txt");
 
     // Tests for every combination of inputs, using the implementation example presented in the assignment exercise
     for i in 0..8 {

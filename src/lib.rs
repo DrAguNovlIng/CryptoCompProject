@@ -128,21 +128,21 @@ impl ElGamal {
 
     fn encode_message(&self, m: Plaintext) -> BigInt {
         //Encode the message to a field element
-        if (&m + BigInt::from(1u8)).modpow(&self.group.q, &self.group.p) == BigInt::from(1) {
-            return m + 1;
+        if (&m + BigInt::from(1u8)).modpow(&self.group.q, &self.group.p) == BigInt::from(1u8) {
+            return (m + BigInt::from(1u8)).modpow(&BigInt::from(1u8), &self.group.p);
         }
         else {
-            return -m - 1;
+            return (-m - BigInt::from(1u8)).modpow(&BigInt::from(1u8), &self.group.p);
         }
     }
 
     fn decode_message(&self, encoded_m: BigInt) -> Plaintext {
         //Decode the field element to a message
         if encoded_m <= self.group.q {
-            return encoded_m - BigInt::from(1u8);
+            return (encoded_m - BigInt::from(1u8)).modpow(&BigInt::from(1u8), &self.group.p);
         } 
         else {
-            return -encoded_m - BigInt::from(1u8);
+            return (-encoded_m - BigInt::from(1u8)).modpow(&BigInt::from(1u8), &self.group.p);
         }
     }
 
