@@ -1,4 +1,4 @@
-use cc::{Alice, Bob, Group};
+use cc::{Alice, Bob, ot::elgamal::Group};
 
 fn main() {
     // This main method runs the tests from the week-3-tests.rs file, it can also be run using the command `cargo test`

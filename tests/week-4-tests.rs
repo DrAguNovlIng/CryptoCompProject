@@ -1,6 +1,6 @@
 extern crate cc;
 
-pub use cc::{Alice, Bob, ElGamal, Group};
+pub use cc::{Alice, Bob, ot::elgamal::Group, ot::elgamal::ElGamal};
 use num_bigint::BigInt;
 
 
