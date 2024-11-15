@@ -51,7 +51,7 @@ fn full_truth_table_test() {
     ];
 
     // To save time, we have already generated a (safe-prime) group and saved it in a file
-    let common_group = Group::new_from_file("group512new.txt");
+    let common_group = Group::new_from_file("group512.txt");
 
     // Tests for every combination of inputs, using the implementation example presented in the assignment exercise
     for i in 0..8 {
