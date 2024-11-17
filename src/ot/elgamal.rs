@@ -101,7 +101,7 @@ pub type SecretKey = BigInt;
 pub type PublicKey = BigInt; //We simply omit sending the group along for simplicity (we assume they agree on the group)
 
 pub struct ElGamal {
-    group: Group,
+    pub group: Group,
 }
 
 impl ElGamal {
