@@ -40,4 +40,15 @@ impl ZpField {
         }
         panic!("Could not generate prime number");
     }
+
+    pub fn add(&self, a: BigInt, b: BigInt) -> BigInt {
+        //a and b are elements in the field, and thus positive
+        (a + b) % &self.p
+    }
+
+    pub fn mul(&self, a: BigInt, b: BigInt) -> BigInt {
+        //a and b are elements in the field, and thus positive
+        (a * b) % &self.p
+    }
+    
 }

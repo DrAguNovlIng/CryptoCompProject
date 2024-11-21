@@ -1,6 +1,7 @@
 extern crate cc;
 
-pub use cc::{ot::elgamal::Group, ot::elgamal::ElGamal};
+use cc::{ot::elgamal::Group, ot::elgamal::ElGamal};
+use cc::bedoza::zp_field::ZpField;
 use num_bigint::BigInt;
 
 
@@ -49,4 +50,14 @@ fn ot_correctness_test_2() {
     let result = chooser.retrieve(m2);
 
     assert_eq!(result, BigInt::from(0u8));
+}
+
+#[test]
+fn test_zp_field() {
+    let mut zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    for _ in 0..1000 {
+        let random_element = zp_field.generate_random_element();
+        assert!(random_element < zp_field.p);
+    }
+    zp_field.struct_to_file("zp_field2048.txt");
 }
