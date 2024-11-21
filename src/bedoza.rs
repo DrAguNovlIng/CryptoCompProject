@@ -77,7 +77,10 @@ impl Bedoza {
     //Multiplies a shared value with a constant (local computation)
     pub fn mul_const(&mut self, a: ShareName, constant: ZpFieldElement) -> ShareName {
         //both parties multiplies their share with the constant
-        todo!()
+        let output_share = self.share_name_generator.next().unwrap();
+        self.alice.mul_const(a.clone(), output_share.clone(), constant.clone());
+        self.bob.mul_const(a, output_share.clone(), constant);
+        output_share
     }
 
     //Multiplies shared values with a constants s.t. the result c is c = x * a + y * b (local computation)

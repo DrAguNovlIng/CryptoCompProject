@@ -116,3 +116,19 @@ fn test_bedoza_adding() {
         assert_eq!(zp_field.create_field_element(BigInt::from(3*i)), opened_share_value);
     }
 }
+
+
+#[test]
+fn test_bedoza_multiplication() {
+    let common_group = Group::struct_from_file("group512.txt");
+    let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
+
+    for i in 0..10 {
+        let elem = zp_field.create_field_element(BigInt::from(i));      
+        let name = bedoza.create_secret_sharing_by_alice(zp_field.create_field_element(elem.clone()));
+        let name2 = bedoza.mul_const(name.clone(), zp_field.create_field_element(BigInt::from(2*i)));
+        let opened_share_value = bedoza.open(name2.clone());
+        assert_eq!(zp_field.create_field_element(BigInt::from(i*(2*i))), opened_share_value);
+    }
+}

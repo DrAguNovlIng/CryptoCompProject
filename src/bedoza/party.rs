@@ -72,4 +72,18 @@ impl Party {
         }
     }
 
+    //Multiplies a share with a constant value
+    pub fn mul_const(&mut self, input_share: ShareName, output_share: ShareName, constant: ZpFieldElement) {
+        let maybe_share = self.shares.get_key_value(&input_share);
+        match maybe_share {
+            Some((_, v)) => {
+                let new_value = self.zp_field.mul(v.clone(), constant);
+                self.shares.insert(output_share, new_value.clone());
+            }
+            None => {
+                panic!("Input Share not found")
+            }
+        }
+    }
+
 }
