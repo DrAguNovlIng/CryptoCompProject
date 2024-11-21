@@ -73,3 +73,17 @@ fn test_name_generator() {
         println!("{}", name);
     }
 }
+
+#[test]
+fn test_bedoza_random_generator() {
+    let common_group = Group::struct_from_file("group512.txt");
+    let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
+
+    for _ in 0..100 {
+        let name = bedoza.rand();
+        let share = bedoza.open(name.clone());
+        assert!(share < zp_field.p);
+        //println!("{}: {}", name, share);
+    }
+}

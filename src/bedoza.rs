@@ -16,17 +16,21 @@ pub struct Bedoza {
     alice: Alice,
     bob: Bob,
     share_name_generator: Box<dyn Iterator<Item = String>>,
+    zp_field: ZpField,
 }
 
 impl Bedoza {
-    pub fn new() -> Self {
-        let common_group = Group::struct_from_file("group512.txt");
-        let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    pub fn new(ot_group: Group, zp_group: ZpField) -> Self {
+        let common_group = ot_group;
+        let zp_field = zp_group;
         alphabet!(LATIN = "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        let mut latin_alphabet_iterator = LATIN.iter_words();
+        latin_alphabet_iterator.next(); //Skip the first element which is an empty string
         Self {
             alice: Alice::new(common_group.clone(), zp_field.clone()),
             bob: Bob::new(common_group.clone(), zp_field.clone()),
-            share_name_generator: Box::new(LATIN.iter_words()),
+            share_name_generator: Box::new(latin_alphabet_iterator),
+            zp_field: zp_field,
         }
     }
 
@@ -63,7 +67,9 @@ impl Bedoza {
         Opens a shared value
      */
     pub fn open(&mut self, secret_to_open: ShareName) -> ZpFieldElement {
-        todo!()
+        let alice_share = self.alice.open_share(secret_to_open.clone());
+        let bob_share = self.bob.open_share(secret_to_open.clone());
+        self.zp_field.add(alice_share, bob_share)
     }
 
     /*
@@ -98,6 +104,18 @@ impl Alice {
         let random_element: ZpFieldElement = self.zp_field.generate_random_element();
         self.shares.insert(name_of_new_share, random_element);
     }
+
+    pub fn open_share(&mut self, share_to_open: ShareName) -> ZpFieldElement {
+        let value = self.shares.get(&share_to_open);
+        match value {
+            Some(v) => {
+                return v.clone()
+            }
+            None => {
+                panic!("Share not found")
+            }   
+        }
+    }
 }
 
 pub struct Bob {
@@ -117,9 +135,21 @@ impl Bob {
             shares: HashMap::new(),
         }
     }
-    
+
     pub fn rand(&mut self, name_of_new_share: ShareName) {
         let random_element: ZpFieldElement = self.zp_field.generate_random_element();
         self.shares.insert(name_of_new_share, random_element);
+    }
+
+    pub fn open_share(&mut self, share_to_open: ShareName) -> ZpFieldElement {
+        let value = self.shares.get(&share_to_open);
+        match value {
+            Some(v) => {
+                return v.clone()
+            }
+            None => {
+                panic!("Share not found")
+            }   
+        }
     }
 }
