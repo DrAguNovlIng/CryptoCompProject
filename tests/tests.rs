@@ -87,3 +87,17 @@ fn test_bedoza_random_generator() {
         //println!("{}: {}", name, share);
     }
 }
+
+#[test]
+fn test_bedoza_alice_identity() {
+    let common_group = Group::struct_from_file("group512.txt");
+    let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
+
+    for i in 0..100 {
+        let elem = zp_field.create_field_element(BigInt::from(i));      
+        let name = bedoza.create_secret_sharing_by_alice(zp_field.create_field_element(elem.clone()));
+        let opened_share_value = bedoza.open(name.clone());
+        assert_eq!(elem, opened_share_value);
+    }
+}

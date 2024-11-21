@@ -20,37 +20,47 @@ impl ZpField {
         }
     }
 
+    //Creates a struct from a file to avoid prime re-generation
     pub fn struct_from_file(path: &str) -> Self {
         let file = File::open(path).unwrap();
         serde_json::from_reader(file).unwrap()
     }
 
+    //Writes the struct to a file to avoid future prime re-generation
     pub fn struct_to_file(&self, path: &str) {
         let json = serde_json::to_string(&self).unwrap();
         let mut file = File::create(path).unwrap();
         file.write_all(json.as_bytes()).unwrap();
     }
     
+    //Creates a field element from a BigInt value, i.e. takes the value mod p
+    pub fn create_field_element(&self, value: BigInt) -> ZpFieldElement {
+        value.modpow(&BigInt::from(1u8), &self.p)
+    }
+
+    //Generates a random element in the field, this is done by repeatedly trials such that the output is uniformly random
     pub fn generate_random_element(&mut self) -> ZpFieldElement {
         for _ in 0..10000 {
             let rng = &mut rand::thread_rng();
             let random_bits: BigUint = RandomBits::new(self.size_in_bits).sample(rng);
             let maybe_field: ZpFieldElement = random_bits.to_bigint().unwrap();
-            if (maybe_field < self.p) && (maybe_field != 0.to_bigint().unwrap()) {
+            if maybe_field < self.p {
                 return maybe_field;
             }
         }
         panic!("Could not generate prime number");
     }
 
+    //Addition in the field
     pub fn add(&self, a: ZpFieldElement, b: ZpFieldElement) -> ZpFieldElement {
-        //a and b are elements in the field, and thus positive
-        (a + b) % &self.p
+        //modpow is used for the modulo operation, since % is the remainder function and can be negative
+        (a + b).modpow(&BigInt::from(1u8), &self.p)
     }
 
+    //Multiplication in the field
     pub fn mul(&self, a: ZpFieldElement, b: ZpFieldElement) -> ZpFieldElement {
-        //a and b are elements in the field, and thus positive
-        (a * b) % &self.p
+        //modpow is used for the modulo operation, since % is the remainder function and can be negative
+        (a * b).modpow(&BigInt::from(1u8), &self.p)
     }
     
 }
