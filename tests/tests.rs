@@ -8,7 +8,6 @@ use alphabet::*;
 
 #[test]
 fn el_gamal_correctness_test() {
-
     let common_group = Group::struct_from_file("group512.txt");
     let elgamal = ElGamal::new(common_group.clone());
     let message = "random message"; //Note message must be smaller than q
@@ -157,10 +156,33 @@ fn test_rand_mul() {
     let common_group = Group::struct_from_file("group512.txt");
     let zp_field = ZpField::struct_from_file("zp_field2048.txt");
     let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
-    
+
     let (u,v,w) = bedoza.rand_mul();
     let u_value = bedoza.open(u.clone());
     let v_value = bedoza.open(v.clone());
     let w_value = bedoza.open(w.clone());
     assert_eq!(zp_field.mul(u_value, v_value), w_value);
+}
+
+#[test]
+fn test_local_const_mul() {
+    let common_group = Group::struct_from_file("group512.txt");
+    let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
+
+    for i in 0..10 {
+        let a = zp_field.create_field_element(BigInt::from(i));
+        let b = zp_field.create_field_element(BigInt::from(3*i));
+        let x = zp_field.create_field_element(BigInt::from(9));
+        let y = zp_field.create_field_element(BigInt::from(7));
+        //I.e we have c = x * a + y * b
+        //Thus c = 9*i + 7*3*i = 30*i
+
+        let name_a = bedoza.create_secret_sharing_by_alice(zp_field.create_field_element(a.clone()));
+        let name_b = bedoza.create_secret_sharing_by_bob(zp_field.create_field_element(b.clone()));
+
+        let name_c = bedoza.local_const_mul(name_a.clone(), name_b.clone(), x.clone(), y.clone());
+        let opened_share_value = bedoza.open(name_c.clone());
+        assert_eq!(zp_field.create_field_element(BigInt::from(30*i)), opened_share_value);
+    }
 }

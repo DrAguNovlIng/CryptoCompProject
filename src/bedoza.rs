@@ -84,11 +84,15 @@ impl Bedoza {
     }
 
     //Multiplies shared values with a constants s.t. the result c is c = x * a + y * b (local computation)
-    pub fn local_const_mul(&mut self, _a: ShareName, _b: ShareName, _x: ZpFieldElement, _y: ZpFieldElement) -> ShareName {
-        todo!()
+    //Note this is basically a macro for previous local functions
+    pub fn local_const_mul(&mut self, a: ShareName, b: ShareName, x: ZpFieldElement, y: ZpFieldElement) -> ShareName {
+        let left_term = self.mul_const(a.clone(), x);
+        let right_term = self.mul_const(b.clone(), y);
+        let res = self.add(left_term, right_term);
+        res
     }
 
-    //Adds two shared values together
+    //Adds two shared values together (local computation)
     pub fn add(&mut self, a: ShareName, b: ShareName) -> ShareName {
         //both parties add their shares
         let output_share = self.share_name_generator.next().unwrap();
