@@ -99,7 +99,36 @@ impl Bedoza {
 
     //Generates random tuple of secrets shared values such that the first to values (a,b) multiplied together equals the third value (c)
     pub fn rand_mul(&mut self) -> (ShareName, ShareName, ShareName) {
-        todo!()
+        let u = self.share_name_generator.next().unwrap();
+        let v = self.share_name_generator.next().unwrap();
+        let w = self.share_name_generator.next().unwrap();
+
+        //This is implemented like we are the trusted dealer
+        let u_value = self.zp_field.generate_random_element();
+        let v_value = self.zp_field.generate_random_element();
+        let w_value = self.zp_field.mul(u_value.clone(), v_value.clone());
+        
+        //Creating the shares
+        let u_alice_value = self.zp_field.generate_random_element();
+        let u_bob_value = self.zp_field.add(u_value.clone(), -u_alice_value.clone());
+
+        let v_alice_value = self.zp_field.generate_random_element();
+        let v_bob_value = self.zp_field.add(v_value.clone(), -v_alice_value.clone());
+
+        let w_alice_value = self.zp_field.generate_random_element();
+        let w_bob_value = self.zp_field.add(w_value.clone(), -w_alice_value.clone());
+        
+        //Distribution of the shares
+        self.alice.receive_secret_share(u.clone(), u_alice_value);
+        self.bob.receive_secret_share(u.clone(), u_bob_value);
+        
+        self.alice.receive_secret_share(v.clone(), v_alice_value);
+        self.bob.receive_secret_share(v.clone(), v_bob_value);
+
+        self.alice.receive_secret_share(w.clone(), w_alice_value);
+        self.bob.receive_secret_share(w.clone(), w_bob_value);
+
+        (u, v, w)
     }
 
     //Generates a new secret shared value which is the product of two previously shared values

@@ -151,3 +151,16 @@ fn test_bedoze_adding_shares() {
         assert_eq!(zp_field.create_field_element(BigInt::from(4*i)), opened_share_value);
     }
 }
+
+#[test]
+fn test_rand_mul() {
+    let common_group = Group::struct_from_file("group512.txt");
+    let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
+    
+    let (u,v,w) = bedoza.rand_mul();
+    let u_value = bedoza.open(u.clone());
+    let v_value = bedoza.open(v.clone());
+    let w_value = bedoza.open(w.clone());
+    assert_eq!(zp_field.mul(u_value, v_value), w_value);
+}
