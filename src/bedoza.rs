@@ -91,7 +91,10 @@ impl Bedoza {
     //Adds two shared values together
     pub fn add(&mut self, a: ShareName, b: ShareName) -> ShareName {
         //both parties add their shares
-        todo!()
+        let output_share = self.share_name_generator.next().unwrap();
+        self.alice.add(a.clone(), b.clone(), output_share.clone());
+        self.bob.add(a, b, output_share.clone());
+        output_share
     }
 
     //Generates random tuple of secrets shared values such that the first to values (a,b) multiplied together equals the third value (c)

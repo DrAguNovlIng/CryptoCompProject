@@ -86,4 +86,19 @@ impl Party {
         }
     }
 
+    //Adds two shares together
+    pub fn add(&mut self, input_share1: ShareName, input_share2: ShareName, output_share: ShareName) {
+        let maybe_share1 = self.shares.get_key_value(&input_share1);
+        let maybe_share2 = self.shares.get_key_value(&input_share2);
+        match (maybe_share1, maybe_share2) {
+            (Some((_, v1)), Some((_, v2))) => {
+                let new_value = self.zp_field.add(v1.clone(), v2.clone());
+                self.shares.insert(output_share, new_value.clone());
+            }
+            _ => {
+                panic!("Input Shares not found")
+            }
+        }
+    }
+
 }
