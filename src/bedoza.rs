@@ -136,8 +136,23 @@ impl Bedoza {
     }
 
     //Generates a new secret shared value which is the product of two previously shared values
+    pub fn mul(&mut self, x: ShareName, y: ShareName) -> ShareName {
+        //variables renamed to match lecture notes
+        let (u, v, w) = self.rand_mul();
+        let d: ShareName = self.add(x.clone(), u);
+        let e: ShareName = self.add(y.clone(), v);
+        let d_value: ZpFieldElement = self.open(d.clone());
+        let e_value: ZpFieldElement = self.open(e.clone());
 
-    pub fn mul(&mut self, _a: ShareName, _b: ShareName) -> ShareName {
-        todo!()
+        //Terms in step 6
+        let ex: ShareName = self.mul_const(x.clone(), e_value.clone());
+        let dy: ShareName = self.mul_const(y.clone(), d_value.clone());
+        let ed: ZpFieldElement = self.zp_field.mul(e_value.clone(), d_value.clone());
+
+        //Adding the terms
+        let wex: ShareName = self.add(w.clone(), ex);
+        let wexdy: ShareName = self.add(wex, dy);
+        let z: ShareName = self.add_const(wexdy, ed);
+        z
     }
 }
