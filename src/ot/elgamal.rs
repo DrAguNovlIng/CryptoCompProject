@@ -3,6 +3,7 @@ use rand::prelude::Distribution;
 use num_bigint::{BigInt, BigUint, RandomBits, ToBigInt};
 use miller_rabin::is_prime;
 use serde::{Deserialize, Serialize};
+use crate::prime_functions::generate_prime;
 
 
 /*
@@ -25,13 +26,12 @@ impl Group {
     }
 
     // Methods to write and read groups to and from files, saving time when testing, instead of generating a new group every time
-    pub fn new_from_file(path: &str) -> Self {
+    pub fn struct_from_file(path: &str) -> Self {
         let file = File::open(path).unwrap();
-        let group: Group = serde_json::from_reader(file).unwrap();
-        group
+        serde_json::from_reader(file).unwrap()
     }
 
-    pub fn write_group_to_file(&self, path: &str) {
+    pub fn struct_to_file(&self, path: &str) {
         let json = serde_json::to_string(&self).unwrap();
         let mut file = File::create(path).unwrap();
         file.write_all(json.as_bytes()).unwrap();
@@ -52,18 +52,6 @@ impl Group {
 /*
     Methods for generate primes and safe prime groups
 */
-
-// Methods to generate a prime, this is done by picking a random number of the desired size and using the Miller-Rabin primality test
-pub fn generate_prime(size: u64) -> BigInt {
-    for _ in 0..10000 {
-        let rng = &mut rand::thread_rng();
-        let maybe_prime: BigUint = RandomBits::new(size).sample(rng);
-        if is_prime(&maybe_prime, 10) {
-            return maybe_prime.to_bigint().unwrap();
-        }
-    }
-    panic!("Could not generate prime number");
-}
 
 // Method to generate a safe prime group, this is done by generating a prime q and then checking if 2q+1 is also a prime
 pub fn generate_safe_prime_group(size: u64) -> Group {

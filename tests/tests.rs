@@ -7,7 +7,7 @@ use num_bigint::BigInt;
 #[test]
 fn el_gamal_correctness_test() {
 
-    let common_group = Group::new_from_file("group512.txt");
+    let common_group = Group::struct_from_file("group512.txt");
     let elgamal = ElGamal::new(common_group.clone());
     let message = "random message"; //Note message must be smaller than q
     let m = BigInt::from_bytes_be(num_bigint::Sign::Plus,message.as_bytes()) % common_group.p;
@@ -23,7 +23,7 @@ fn el_gamal_correctness_test() {
 
 #[test]
 fn ot_correctness_test_1() {
-    let common_group = Group::new_from_file("group512.txt");
+    let common_group = Group::struct_from_file("group512.txt");
     let mut chooser = cc::ot::Chooser::new(common_group.clone(), 2);
     let mut producer = cc::ot::Producer::new(common_group.clone(), 2, |i, j| {
         BigInt::from(i*j) //I.e. the AND function
@@ -38,7 +38,7 @@ fn ot_correctness_test_1() {
 
 #[test]
 fn ot_correctness_test_2() {
-    let common_group = Group::new_from_file("group512.txt");
+    let common_group = Group::struct_from_file("group512.txt");
     let mut chooser = cc::ot::Chooser::new(common_group.clone(), 2);
     let mut producer = cc::ot::Producer::new(common_group.clone(), 2, |i, j| {
         BigInt::from(i*j) //I.e. the AND function

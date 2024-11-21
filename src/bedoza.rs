@@ -1,9 +1,10 @@
-use num_bigint::BigInt;
+pub mod zp_field;
 
+use num_bigint::BigInt;
 use crate::ot::{elgamal::Group, Chooser, Producer};
 use std::collections::HashMap;
 
-type ShareKey = String;
+type ShareName = String;
 type ZpFieldElement = BigInt;
 
 
@@ -17,7 +18,7 @@ pub struct Bedoza {
 
 impl Bedoza {
     pub fn new() -> Self {
-        let common_group = Group::new_from_file("group512.txt"); //Maybe should be saved?
+        let common_group = Group::struct_from_file("group512.txt"); //Maybe should be saved?
         Self {
             alice: Alice::new(common_group.clone()),
             bob: Bob::new(common_group.clone()),
@@ -28,7 +29,7 @@ impl Bedoza {
         RandMul()
         Generates random tuple of secrets shared values such that the first to values (a,b) multiplied together equals the third value (c)
      */
-    pub fn rand_mul(&mut self) -> (ShareKey, ShareKey, ShareKey) {
+    pub fn rand_mul(&mut self) -> (ShareName, ShareName, ShareName) {
         todo!()
     }
 
@@ -36,7 +37,7 @@ impl Bedoza {
         Mul()
         Generates a new secret shared value which is the product of two previously shared values
      */
-    pub fn mul(&mut self, a: ShareKey, b: ShareKey) -> ShareKey {
+    pub fn mul(&mut self, a: ShareName, b: ShareName) -> ShareName {
         todo!()
     }
 
@@ -44,7 +45,7 @@ impl Bedoza {
         Rand()
         Generates a random shared value
      */
-    pub fn rand(&mut self) -> ShareKey {
+    pub fn rand(&mut self) -> ShareName {
         todo!()
     }
 
@@ -52,7 +53,7 @@ impl Bedoza {
         Open()
         Opens a shared value
      */
-    pub fn open(&mut self, secret_to_open: ShareKey) -> ZpFieldElement {
+    pub fn open(&mut self, secret_to_open: ShareName) -> ZpFieldElement {
         todo!()
     }
 
@@ -60,7 +61,7 @@ impl Bedoza {
         LocalConstMul()
         Multiplies shared values with a constants s.t. the result c is c = x * a + y * b
      */
-    pub fn local_const_mul(&mut self, a: ShareKey, b: ShareKey, x: ZpFieldElement, y: ZpFieldElement) -> ShareKey {
+    pub fn local_const_mul(&mut self, a: ShareName, b: ShareName, x: ZpFieldElement, y: ZpFieldElement) -> ShareName {
         todo!()
     }
 }
@@ -80,6 +81,10 @@ impl Alice {
             ot_chooser: Chooser::new(common_group, 2),
             shares: HashMap::new(),
         }
+    }
+
+    pub fn rand(&mut self, name_of_new_share: ShareName) {
+        todo!()
     }
 }
 
