@@ -4,6 +4,8 @@ use rand::prelude::Distribution;
 use num_bigint::{BigInt, BigUint, RandomBits, ToBigInt};
 use crate::prime_functions::generate_prime;
 
+pub type ZpFieldElement = BigInt;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ZpField {
     pub size_in_bits: u64, //size of the prime in bits
@@ -29,11 +31,11 @@ impl ZpField {
         file.write_all(json.as_bytes()).unwrap();
     }
     
-    pub fn generate_random_element(&mut self) -> BigInt {
+    pub fn generate_random_element(&mut self) -> ZpFieldElement {
         for _ in 0..10000 {
             let rng = &mut rand::thread_rng();
             let random_bits: BigUint = RandomBits::new(self.size_in_bits).sample(rng);
-            let maybe_field: BigInt = random_bits.to_bigint().unwrap();
+            let maybe_field: ZpFieldElement = random_bits.to_bigint().unwrap();
             if (maybe_field < self.p) && (maybe_field != 0.to_bigint().unwrap()) {
                 return maybe_field;
             }
@@ -41,12 +43,12 @@ impl ZpField {
         panic!("Could not generate prime number");
     }
 
-    pub fn add(&self, a: BigInt, b: BigInt) -> BigInt {
+    pub fn add(&self, a: ZpFieldElement, b: ZpFieldElement) -> ZpFieldElement {
         //a and b are elements in the field, and thus positive
         (a + b) % &self.p
     }
 
-    pub fn mul(&self, a: BigInt, b: BigInt) -> BigInt {
+    pub fn mul(&self, a: ZpFieldElement, b: ZpFieldElement) -> ZpFieldElement {
         //a and b are elements in the field, and thus positive
         (a * b) % &self.p
     }

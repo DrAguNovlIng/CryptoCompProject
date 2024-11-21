@@ -1,9 +1,10 @@
 extern crate cc;
 
+use cc::bedoza;
 use cc::{ot::elgamal::Group, ot::elgamal::ElGamal};
 use cc::bedoza::zp_field::ZpField;
 use num_bigint::BigInt;
-
+use alphabet::*;
 
 #[test]
 fn el_gamal_correctness_test() {
@@ -60,4 +61,15 @@ fn test_zp_field() {
         assert!(random_element < zp_field.p);
     }
     zp_field.struct_to_file("zp_field2048.txt");
+}
+
+#[test]
+fn test_name_generator() {
+    alphabet!(LATIN = "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    let mut name_generator = LATIN.iter_words();
+
+    for _ in 0..1000 {
+        let name = name_generator.next().unwrap();
+        println!("{}", name);
+    }
 }
