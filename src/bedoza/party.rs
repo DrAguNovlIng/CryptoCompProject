@@ -57,4 +57,19 @@ impl Party {
         }
     }
 
+    //Adds a constant value to an already known share
+    pub fn add_const(&mut self, input_share: ShareName, output_share: ShareName, constant: ZpFieldElement) {
+        let maybe_share = self.shares.get_key_value(&input_share);
+        match maybe_share {
+            Some((_, v)) => {
+                let new_value = self.zp_field.add(v.clone(), constant);
+                self.shares.insert(output_share, new_value.clone());
+            }
+            None => {
+                panic!("Input Share not found")
+            }
+            
+        }
+    }
+
 }

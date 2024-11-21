@@ -5,6 +5,7 @@ use crate::ot::elgamal::Group;
 use crate::bedoza::zp_field::{ZpField, ZpFieldElement};
 use crate::bedoza::party::{Party, ShareName};
 use alphabet::*;
+use num_bigint::BigInt;
 
 
 /*
@@ -48,17 +49,6 @@ impl Bedoza {
         name
     }
 
-    //Generates random tuple of secrets shared values such that the first to values (a,b) multiplied together equals the third value (c)
-    pub fn rand_mul(&mut self) -> (ShareName, ShareName, ShareName) {
-        todo!()
-    }
-
-    //Generates a new secret shared value which is the product of two previously shared values
-
-    pub fn mul(&mut self, _a: ShareName, _b: ShareName) -> ShareName {
-        todo!()
-    }
-
     //Generates a random shared value
     pub fn rand(&mut self) -> ShareName {
         //Generating a random field element by both parties generating a random share should be fine
@@ -75,8 +65,40 @@ impl Bedoza {
         self.zp_field.add(alice_share, bob_share)
     }
 
-    //Multiplies shared values with a constants s.t. the result c is c = x * a + y * b
+    //Adds a constant to a shared value (local computation)
+    pub fn add_const(&mut self, a: ShareName, constant: ZpFieldElement) -> ShareName {
+        //one party adds the constant to their share and the other party does nothing (i.e adds 0)
+        let output_share = self.share_name_generator.next().unwrap();
+        self.alice.add_const(a.clone(), output_share.clone(), constant);
+        self.bob.add_const(a, output_share.clone(), self.zp_field.create_field_element(BigInt::from(0)));
+        output_share
+    }
+
+    //Multiplies a shared value with a constant (local computation)
+    pub fn mul_const(&mut self, a: ShareName, constant: ZpFieldElement) -> ShareName {
+        //both parties multiplies their share with the constant
+        todo!()
+    }
+
+    //Multiplies shared values with a constants s.t. the result c is c = x * a + y * b (local computation)
     pub fn local_const_mul(&mut self, _a: ShareName, _b: ShareName, _x: ZpFieldElement, _y: ZpFieldElement) -> ShareName {
+        todo!()
+    }
+
+    //Adds two shared values together
+    pub fn add(&mut self, a: ShareName, b: ShareName) -> ShareName {
+        //both parties add their shares
+        todo!()
+    }
+
+    //Generates random tuple of secrets shared values such that the first to values (a,b) multiplied together equals the third value (c)
+    pub fn rand_mul(&mut self) -> (ShareName, ShareName, ShareName) {
+        todo!()
+    }
+
+    //Generates a new secret shared value which is the product of two previously shared values
+
+    pub fn mul(&mut self, _a: ShareName, _b: ShareName) -> ShareName {
         todo!()
     }
 }
