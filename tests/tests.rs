@@ -1,6 +1,6 @@
 extern crate cc;
 
-use cc::bedoza::{self, zp_field};
+use cc::bedoza;
 use cc::{ot::elgamal::Group, ot::elgamal::ElGamal};
 use cc::bedoza::zp_field::ZpField;
 use num_bigint::BigInt;
@@ -13,12 +13,12 @@ fn load_groups() -> (Group, ZpField) {
     (common_group, zp_field)
 }
 
-fn gen_zp_field_to_file() {
+fn _gen_zp_field_to_file() {
     let prime_field = ZpField::new(2048);
     prime_field.struct_to_file("zp_field2048.txt");
 }
 
-fn manual_test_name_generator() {
+fn _manual_test_name_generator() {
     alphabet!(LATIN = "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
     let mut name_generator = LATIN.iter_words();
 
@@ -205,7 +205,6 @@ fn test_multiplication() {
 
         let name_c = bedoza.mul(name_a.clone(), name_b.clone());
         let opened_share_value = bedoza.open(name_c.clone());
-        println!("{} * {} = {}", i, 3*i, opened_share_value);
         assert_eq!(zp_field.create_field_element(BigInt::from(3*i*i)), opened_share_value);
     }
 }
