@@ -1,14 +1,36 @@
 extern crate cc;
 
-use cc::bedoza;
+use cc::bedoza::{self, zp_field};
 use cc::{ot::elgamal::Group, ot::elgamal::ElGamal};
 use cc::bedoza::zp_field::ZpField;
 use num_bigint::BigInt;
 use alphabet::*;
 
+fn load_groups() -> (Group, ZpField) {
+    let common_group = Group::struct_from_file("group512.txt");
+    let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    //let zp_field = ZpField::struct_from_file("zp_binary.txt");
+    (common_group, zp_field)
+}
+
+fn gen_zp_field_to_file() {
+    let prime_field = ZpField::new(2048);
+    prime_field.struct_to_file("zp_field2048.txt");
+}
+
+fn manual_test_name_generator() {
+    alphabet!(LATIN = "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    let mut name_generator = LATIN.iter_words();
+
+    for _ in 0..1000 {
+        let name = name_generator.next().unwrap();
+        println!("{}", name);
+    }
+}
+
 #[test]
 fn el_gamal_correctness_test() {
-    let common_group = Group::struct_from_file("group512.txt");
+    let common_group = load_groups().0;
     let elgamal = ElGamal::new(common_group.clone());
     let message = "random message"; //Note message must be smaller than q
     let m = BigInt::from_bytes_be(num_bigint::Sign::Plus,message.as_bytes()) % common_group.p;
@@ -24,7 +46,7 @@ fn el_gamal_correctness_test() {
 
 #[test]
 fn ot_correctness_test_1() {
-    let common_group = Group::struct_from_file("group512.txt");
+    let common_group = load_groups().0;
     let mut chooser = cc::ot::Chooser::new(common_group.clone(), 2);
     let mut producer = cc::ot::Producer::new(common_group.clone(), 2, |i, j| {
         BigInt::from(i*j) //I.e. the AND function
@@ -39,7 +61,7 @@ fn ot_correctness_test_1() {
 
 #[test]
 fn ot_correctness_test_2() {
-    let common_group = Group::struct_from_file("group512.txt");
+    let common_group = load_groups().0;
     let mut chooser = cc::ot::Chooser::new(common_group.clone(), 2);
     let mut producer = cc::ot::Producer::new(common_group.clone(), 2, |i, j| {
         BigInt::from(i*j) //I.e. the AND function
@@ -54,7 +76,7 @@ fn ot_correctness_test_2() {
 
 #[test]
 fn test_zp_field() {
-    let mut zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    let mut zp_field = load_groups().1;
     for _ in 0..1000 {
         let random_element = zp_field.generate_random_element();
         assert!(random_element < zp_field.p);
@@ -63,20 +85,8 @@ fn test_zp_field() {
 }
 
 #[test]
-fn test_name_generator() {
-    alphabet!(LATIN = "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-    let mut name_generator = LATIN.iter_words();
-
-    for _ in 0..1000 {
-        let name = name_generator.next().unwrap();
-        println!("{}", name);
-    }
-}
-
-#[test]
 fn test_bedoza_random_generator() {
-    let common_group = Group::struct_from_file("group512.txt");
-    let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    let (common_group, zp_field) = load_groups();
     let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
 
     for _ in 0..100 {
@@ -89,8 +99,7 @@ fn test_bedoza_random_generator() {
 
 #[test]
 fn test_bedoza_alice_identity() {
-    let common_group = Group::struct_from_file("group512.txt");
-    let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    let (common_group, zp_field) = load_groups();
     let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
 
     for i in 0..10 {
@@ -102,14 +111,13 @@ fn test_bedoza_alice_identity() {
 }
 
 #[test]
-fn test_bedoza_local_adding() {
-    let common_group = Group::struct_from_file("group512.txt");
-    let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+fn test_bedoza_add_const() {
+    let (common_group, zp_field) = load_groups();
     let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
 
     for i in 0..10 {
         let elem = zp_field.create_field_element(BigInt::from(i));      
-        let name = bedoza.create_secret_sharing_by_alice(zp_field.create_field_element(elem.clone()));
+        let name = bedoza.create_secret_sharing_by_alice(elem.clone());
         let name2 = bedoza.add_const(name.clone(), zp_field.create_field_element(BigInt::from(2*i)));
         let opened_share_value = bedoza.open(name2.clone());
         assert_eq!(zp_field.create_field_element(BigInt::from(3*i)), opened_share_value);
@@ -119,13 +127,12 @@ fn test_bedoza_local_adding() {
 
 #[test]
 fn test_bedoza_local_multiplication() {
-    let common_group = Group::struct_from_file("group512.txt");
-    let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    let (common_group, zp_field) = load_groups();
     let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
 
     for i in 0..10 {
         let elem = zp_field.create_field_element(BigInt::from(i));      
-        let name = bedoza.create_secret_sharing_by_alice(zp_field.create_field_element(elem.clone()));
+        let name = bedoza.create_secret_sharing_by_alice(elem.clone());
         let name2 = bedoza.mul_const(name.clone(), zp_field.create_field_element(BigInt::from(2*i)));
         let opened_share_value = bedoza.open(name2.clone());
         assert_eq!(zp_field.create_field_element(BigInt::from(i*(2*i))), opened_share_value);
@@ -134,16 +141,15 @@ fn test_bedoza_local_multiplication() {
 
 #[test]
 fn test_bedoza_adding_shares() {
-    let common_group = Group::struct_from_file("group512.txt");
-    let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    let (common_group, zp_field) = load_groups();
     let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
 
     for i in 0..10 {
         let a = zp_field.create_field_element(BigInt::from(i));
         let b = zp_field.create_field_element(BigInt::from(3*i));
 
-        let name_a = bedoza.create_secret_sharing_by_alice(zp_field.create_field_element(a.clone()));
-        let name_b = bedoza.create_secret_sharing_by_bob(zp_field.create_field_element(b.clone()));
+        let name_a = bedoza.create_secret_sharing_by_alice(a.clone());
+        let name_b = bedoza.create_secret_sharing_by_bob(b.clone());
 
         let name_c = bedoza.add(name_a.clone(), name_b.clone());
         let opened_share_value = bedoza.open(name_c.clone());
@@ -153,8 +159,7 @@ fn test_bedoza_adding_shares() {
 
 #[test]
 fn test_rand_mul() {
-    let common_group = Group::struct_from_file("group512.txt");
-    let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    let (common_group, zp_field) = load_groups();
     let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
 
     let (u,v,w) = bedoza.rand_mul();
@@ -166,8 +171,7 @@ fn test_rand_mul() {
 
 #[test]
 fn test_local_const_mul() {
-    let common_group = Group::struct_from_file("group512.txt");
-    let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    let (common_group, zp_field) = load_groups();
     let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
 
     for i in 0..10 {
@@ -189,19 +193,19 @@ fn test_local_const_mul() {
 
 #[test]
 fn test_multiplication() {
-    let common_group = Group::struct_from_file("group512.txt");
-    let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    let (common_group, zp_field) = load_groups();
     let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
 
     for i in 0..10 {
-        let a = zp_field.create_field_element(BigInt::from(i));
-        let b = zp_field.create_field_element(BigInt::from(3*i));
+        let a_value = zp_field.create_field_element(BigInt::from(i));
+        let b_value = zp_field.create_field_element(BigInt::from(3*i));
 
-        let name_a = bedoza.create_secret_sharing_by_alice(a.clone());
-        let name_b = bedoza.create_secret_sharing_by_bob(b.clone());
+        let name_a = bedoza.create_secret_sharing_by_alice(a_value.clone());
+        let name_b = bedoza.create_secret_sharing_by_bob(b_value.clone());
 
         let name_c = bedoza.mul(name_a.clone(), name_b.clone());
         let opened_share_value = bedoza.open(name_c.clone());
-        assert_eq!(zp_field.create_field_element(BigInt::from(i*3*i)), opened_share_value);
+        println!("{} * {} = {}", i, 3*i, opened_share_value);
+        assert_eq!(zp_field.create_field_element(BigInt::from(3*i*i)), opened_share_value);
     }
 }

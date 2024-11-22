@@ -101,7 +101,7 @@ impl Bedoza {
         output_share
     }
 
-    //Generates random tuple of secrets shared values such that the first to values (a,b) multiplied together equals the third value (c)
+    //Generates random tuple of secrets shared values such that the first to values (u,v) multiplied together equals the third value (w)
     pub fn rand_mul(&mut self) -> (ShareName, ShareName, ShareName) {
         let u = self.share_name_generator.next().unwrap();
         let v = self.share_name_generator.next().unwrap();
@@ -152,7 +152,7 @@ impl Bedoza {
         //Adding the terms
         let wex: ShareName = self.add(w.clone(), ex);
         let wexdy: ShareName = self.add(wex, dy);
-        let z: ShareName = self.add_const(wexdy, ed);
+        let z: ShareName = self.add_const(wexdy, -ed);
         z
     }
 }

@@ -8,7 +8,7 @@ pub fn generate_prime(size: u64) -> BigInt {
     for _ in 0..10000 {
         let rng = &mut rand::thread_rng();
         let maybe_prime: BigUint = RandomBits::new(size).sample(rng);
-        if is_prime(&maybe_prime, 12) {
+        if is_prime(&maybe_prime, 18) {
             return maybe_prime.to_bigint().unwrap();
         }
     }
