@@ -1,16 +1,140 @@
 extern crate cc;
 
+use std::fmt::Debug;
+use std::ops::Mul;
 use cc::bedoza;
 use cc::{ot::elgamal::Group, ot::elgamal::ElGamal};
 use cc::bedoza::zp_field::ZpField;
 use num_bigint::BigInt;
 use alphabet::*;
 
+use p256::elliptic_curve::group::Group as P256Group;
+use p256::elliptic_curve::point::AffineCoordinates;
+use p256::elliptic_curve::scalar::FromUintUnchecked;
+use p256::elliptic_curve::sec1::ToEncodedPoint;
+use p256::{Scalar, U256, U32};
+use p256::elliptic_curve::bigint::{ArrayEncoding, ByteArray, Encoding};
+use num_traits::One;
+use p256::elliptic_curve::generic_array::GenericArray;
+use cc::bedoza::Bedoza;
+
 fn load_groups() -> (Group, ZpField) {
     let common_group = Group::struct_from_file("group512.txt");
-    let zp_field = ZpField::struct_from_file("zp_field2048.txt");
-    //let zp_field = ZpField::struct_from_file("zp_binary.txt");
+    let zp_field = ZpField::struct_from_file("zp_field_p256.txt");
+
+    // let zp_field = ZpField::struct_from_file("zp_field2048.txt");
+    // let zp_field = ZpField::struct_from_file("zp_binary.txt");
     (common_group, zp_field)
+}
+#[test]
+fn test_curve() {
+    let generator = p256::ProjectivePoint::generator();
+
+    let affine_point = generator.to_affine();
+    println!("Normal x: {:?}",affine_point.x());
+
+    let affine_point_encoded = affine_point.to_encoded_point(false);
+    println!("Encoded point x: {:?}",affine_point_encoded.x());
+    println!("Encoded point y: {:?}",affine_point_encoded.y());
+
+    let some_element = generator.mul(Scalar::from(2u32));
+    let affine_point2 = some_element.to_affine();
+    println!("Normal x times 2: {:?}",affine_point2.x());
+
+}
+
+#[test]
+fn test_ecg_share() {
+    let generator = p256::ProjectivePoint::generator();
+    let (common_group, mut zp_field) = load_groups();
+
+    let a = zp_field.create_field_element(BigInt::from(73));
+
+    let mut a_bytes_be = a.to_bytes_be().1;
+
+    while a_bytes_be.len() < 32 {
+        a_bytes_be.insert(0, 0); // Prepend zeroes to reach 32 bytes
+    }
+
+    let some_element = generator.mul(Scalar::from_uint_unchecked(U256::from_be_slice(&a_bytes_be)));
+
+    let affine_point = some_element.to_affine();
+    let affine_point_encoded = affine_point.to_encoded_point(false);
+    println!("pub Encoded point x: {:?}",affine_point_encoded.x());
+    println!("pub Encoded point y: {:?}",affine_point_encoded.y());
+
+
+    let a_alice_value = zp_field.generate_random_element();
+    let mut a_alice_be = a_alice_value.to_bytes_be().1;
+
+    while a_alice_be.len() < 32 {
+        a_alice_be.insert(0, 0); // Prepend zeroes to reach 32 bytes
+    }
+
+    let a_bob_value = zp_field.add(a.clone(), -a_alice_value.clone());
+    let mut a_bob_be = a_bob_value.to_bytes_be().1;
+
+    while a_bob_be.len() < 32 {
+        a_bob_be.insert(0, 0); // Prepend zeroes to reach 32 bytes
+    }
+
+    let alice_mul_gen = generator.mul(Scalar::from_uint_unchecked(U256::from_be_slice(&a_alice_be)));
+    let bob_mul_gen = generator.mul(Scalar::from_uint_unchecked(U256::from_be_slice(&a_bob_be)));
+
+    let alice_affine = alice_mul_gen.to_affine();
+    let alice_encoded_point = alice_affine.to_encoded_point(false);
+
+    let bob_affine = bob_mul_gen.to_affine();
+    let bob_encoded_point = bob_affine.to_encoded_point(false);
+
+    println!("Alice encoded point x: {:?}",alice_encoded_point.x());
+    println!("Bob encoded point x: {:?}",bob_encoded_point.x());
+
+    match alice_encoded_point.x() {
+        Some(x_a) => match bob_encoded_point.x() {
+            Some(x_b) => {
+                let x1: U256 = U256::from_be_slice(&x_a);
+                let x2: U256 = U256::from_be_slice(&x_b);
+                let mut p_bytes = zp_field.p.to_bytes_be().1;
+                while p_bytes.len() < 32 {
+                    p_bytes.insert(0, 0); // Prepend zeroes to reach 32 bytes
+                }
+                // let sum = (x1 + x2) % U256::from_be_slice(&p_bytes);
+                let sum: U256 = x1.add_mod(&x2, &U256::from_be_slice(&p_bytes));
+                println!("sum x: {:?}",sum.to_be_bytes());
+            }
+            _ => {}
+        },
+        _ => {}
+    }
+
+
+
+
+}
+
+
+fn _gen_fixed_elliptical_curve_prime_to_file() {
+    let two = BigInt::from(2);
+    let one = BigInt::one();
+
+    // Compute 2^32 - 1
+    let two_32_minus_1 = (&two.pow(32)) - &one;
+
+    // Compute 2^224 * (2^32 - 1)
+    let term1 = (&two.pow(224)) * &two_32_minus_1;
+
+    // Compute 2^192
+    let term2 = two.pow(192);
+
+    // Compute 2^96
+    let term3 = two.pow(96);
+
+    // Compute p = 2^224 * (2^32 - 1) + 2^192 + 2^96 - 1
+    let prime = term1 + term2 + term3 - &one;
+    let prime_field = ZpField::new_from_prime(prime, 256);
+    prime_field.struct_to_file("zp_field_p256.txt");
+
 }
 
 fn _gen_zp_field_to_file() {

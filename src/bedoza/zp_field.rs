@@ -20,6 +20,13 @@ impl ZpField {
         }
     }
 
+    pub fn new_from_prime(prime: BigInt, group_size: u64) -> Self {
+        Self {
+            size_in_bits: group_size,
+            p: prime
+        }
+    }
+
     //Creates a struct from a file to avoid prime re-generation
     pub fn struct_from_file(path: &str) -> Self {
         let file = File::open(path).unwrap();
