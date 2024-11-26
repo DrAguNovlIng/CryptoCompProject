@@ -1,6 +1,5 @@
 extern crate cc;
 
-use std::fmt::Debug;
 use std::ops::Mul;
 use cc::bedoza;
 use cc::{ot::elgamal::Group, ot::elgamal::ElGamal};
@@ -12,11 +11,9 @@ use p256::elliptic_curve::group::Group as P256Group;
 use p256::elliptic_curve::point::AffineCoordinates;
 use p256::elliptic_curve::scalar::FromUintUnchecked;
 use p256::elliptic_curve::sec1::ToEncodedPoint;
-use p256::{Scalar, U256, U32};
-use p256::elliptic_curve::bigint::{ArrayEncoding, ByteArray, Encoding};
+use p256::{Scalar, U256};
+use p256::elliptic_curve::bigint::Encoding;
 use num_traits::One;
-use p256::elliptic_curve::generic_array::GenericArray;
-use cc::bedoza::Bedoza;
 
 fn load_groups() -> (Group, ZpField) {
     let common_group = Group::struct_from_file("group512.txt");
@@ -46,7 +43,7 @@ fn test_curve() {
 #[test]
 fn test_ecg_share() {
     let generator = p256::ProjectivePoint::generator();
-    let (common_group, mut zp_field) = load_groups();
+    let (_common_group, mut zp_field) = load_groups();
 
     let a = zp_field.create_field_element(BigInt::from(73));
 
@@ -90,6 +87,14 @@ fn test_ecg_share() {
     println!("Alice encoded point x: {:?}",alice_encoded_point.x());
     println!("Bob encoded point x: {:?}",bob_encoded_point.x());
 
+    let added_point = alice_mul_gen.add(&bob_mul_gen);
+    let added_affine = added_point.to_affine();
+    let added_encoded_point = added_affine.to_encoded_point(false);
+    
+    println!("added Encoded point x: {:?}",added_encoded_point.x());
+    println!("added Encoded point y: {:?}",added_encoded_point.y());
+
+    /*
     match alice_encoded_point.x() {
         Some(x_a) => match bob_encoded_point.x() {
             Some(x_b) => {
@@ -107,9 +112,7 @@ fn test_ecg_share() {
         },
         _ => {}
     }
-
-
-
+    */
 
 }
 
