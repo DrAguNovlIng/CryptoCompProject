@@ -40,80 +40,47 @@ fn test_curve() {
 
 }
 
+fn print_elliptic_curve_point(point: &p256::ProjectivePoint) {
+    let encoded_point = point.to_affine().to_encoded_point(false);
+    println!("Encoded point x: {:?}",encoded_point.x());
+    println!("Encoded point y: {:?}",encoded_point.y());
+}
+
+fn pad_to_32_bytes_big_endian(value: BigInt) -> Vec<u8> {
+    let mut bytes = value.to_bytes_be().1;
+    while bytes.len() < 32 {
+        bytes.insert(0, 0); // Prepend zeroes to reach 32 bytes
+    }
+    bytes
+}
+
+fn bigint_to_scalar(value: BigInt) -> Scalar {
+    Scalar::from_uint_unchecked(U256::from_be_slice(&pad_to_32_bytes_big_endian(value)))
+}
+
 #[test]
 fn test_ecg_share() {
     let generator = p256::ProjectivePoint::generator();
     let (_common_group, mut zp_field) = load_groups();
 
-    let a = zp_field.create_field_element(BigInt::from(73));
+    let zp_elem_73 = zp_field.create_field_element(BigInt::from(73));
+    let direct_elip_element = generator.mul(bigint_to_scalar(zp_elem_73.clone()));
 
-    let mut a_bytes_be = a.to_bytes_be().1;
-
-    while a_bytes_be.len() < 32 {
-        a_bytes_be.insert(0, 0); // Prepend zeroes to reach 32 bytes
-    }
-
-    let some_element = generator.mul(Scalar::from_uint_unchecked(U256::from_be_slice(&a_bytes_be)));
-
-    let affine_point = some_element.to_affine();
-    let affine_point_encoded = affine_point.to_encoded_point(false);
-    println!("pub Encoded point x: {:?}",affine_point_encoded.x());
-    println!("pub Encoded point y: {:?}",affine_point_encoded.y());
-
+    print_elliptic_curve_point(&direct_elip_element);
 
     let a_alice_value = zp_field.generate_random_element();
-    let mut a_alice_be = a_alice_value.to_bytes_be().1;
+    let a_bob_value = zp_field.add(zp_elem_73.clone(), -a_alice_value.clone());
 
-    while a_alice_be.len() < 32 {
-        a_alice_be.insert(0, 0); // Prepend zeroes to reach 32 bytes
-    }
+    let alice_point = generator.mul(bigint_to_scalar(a_alice_value.clone()));
+    let bob_point = generator.mul(bigint_to_scalar(a_bob_value.clone()));
 
-    let a_bob_value = zp_field.add(a.clone(), -a_alice_value.clone());
-    let mut a_bob_be = a_bob_value.to_bytes_be().1;
+    let added_point = alice_point.add(&bob_point);
 
-    while a_bob_be.len() < 32 {
-        a_bob_be.insert(0, 0); // Prepend zeroes to reach 32 bytes
-    }
+    print_elliptic_curve_point(&added_point);
 
-    let alice_mul_gen = generator.mul(Scalar::from_uint_unchecked(U256::from_be_slice(&a_alice_be)));
-    let bob_mul_gen = generator.mul(Scalar::from_uint_unchecked(U256::from_be_slice(&a_bob_be)));
+    let is_equal = added_point.eq(&direct_elip_element);
 
-    let alice_affine = alice_mul_gen.to_affine();
-    let alice_encoded_point = alice_affine.to_encoded_point(false);
-
-    let bob_affine = bob_mul_gen.to_affine();
-    let bob_encoded_point = bob_affine.to_encoded_point(false);
-
-    println!("Alice encoded point x: {:?}",alice_encoded_point.x());
-    println!("Bob encoded point x: {:?}",bob_encoded_point.x());
-
-    let added_point = alice_mul_gen.add(&bob_mul_gen);
-    let added_affine = added_point.to_affine();
-    let added_encoded_point = added_affine.to_encoded_point(false);
-    
-    println!("added Encoded point x: {:?}",added_encoded_point.x());
-    println!("added Encoded point y: {:?}",added_encoded_point.y());
-
-    /*
-    match alice_encoded_point.x() {
-        Some(x_a) => match bob_encoded_point.x() {
-            Some(x_b) => {
-                let x1: U256 = U256::from_be_slice(&x_a);
-                let x2: U256 = U256::from_be_slice(&x_b);
-                let mut p_bytes = zp_field.p.to_bytes_be().1;
-                while p_bytes.len() < 32 {
-                    p_bytes.insert(0, 0); // Prepend zeroes to reach 32 bytes
-                }
-                // let sum = (x1 + x2) % U256::from_be_slice(&p_bytes);
-                let sum: U256 = x1.add_mod(&x2, &U256::from_be_slice(&p_bytes));
-                println!("sum x: {:?}",sum.to_be_bytes());
-            }
-            _ => {}
-        },
-        _ => {}
-    }
-    */
-
+    println!("Is equal: {}", is_equal); //This is not equal, find out why
 }
 
 
