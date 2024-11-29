@@ -1,16 +1,14 @@
 extern crate cc;
 
-use std::ops::Mul;
 use cc::bedoza;
 use cc::{ot::elgamal::Group, ot::elgamal::ElGamal};
 use cc::bedoza::zp_field::ZpField;
 use num_bigint::BigInt;
 use alphabet::*;
 
-use p256::elliptic_curve::group::Group as P256Group;
-use p256::elliptic_curve::scalar::FromUintUnchecked;
 use p256::elliptic_curve::sec1::ToEncodedPoint;
-use p256::{elliptic_curve, Scalar, U256};
+use p256::elliptic_curve::{NonZeroScalar, PublicKey};
+use p256::{NistP256, U256};
 use num_traits::One;
 
 fn load_groups() -> (Group, ZpField) {
@@ -36,42 +34,75 @@ fn pad_to_32_bytes_big_endian(value: BigInt) -> Vec<u8> {
     bytes
 }
 
-fn bigint_to_scalar(value: BigInt) -> Scalar {
-    Scalar::from_uint_unchecked(U256::from_be_slice(&pad_to_32_bytes_big_endian(value)))
+fn bigint_to_scalar(value: BigInt) -> NonZeroScalar<NistP256> {
+    let maybe= NonZeroScalar::<NistP256>::from_uint(U256::from_be_slice(&pad_to_32_bytes_big_endian(value.clone())));
+    if maybe.is_none().into() {
+        panic!("Failed to convert BigInt to scalar, value was: {:?}", value);
+    } else {
+        maybe.unwrap()
+    }
 }
 
 #[test]
 fn test_curve_homomorphism() {
-    let generator = p256::ProjectivePoint::generator();
-    
     let (_common_group, zp_field) = load_groups();
 
     //a+b = c
-    let zp_elem_a = zp_field.create_field_element(BigInt::from(-1));
-    let zp_elem_b = zp_field.create_field_element(BigInt::from(-2));
+    let zp_elem_a = zp_field.create_field_element(BigInt::from(2));
+    let zp_elem_b = zp_field.create_field_element(BigInt::from(4));
     let zp_elem_c = zp_field.add(zp_elem_a.clone(), zp_elem_b.clone());
+    let not_zp_elem_d = zp_field.add(zp_elem_a.clone(), zp_elem_b.clone());//zp_elem_a.clone() + zp_elem_b.clone(); //I.e not mod p
 
     println!("a+b = c in z_p");
     println!("a: {}", zp_elem_a);
     println!("b: {}", zp_elem_b);
     println!("c: {}", zp_elem_c);
-    let c_direct_point = generator.clone().mul(bigint_to_scalar(zp_elem_c.clone()));
+    let scalar_of_a = bigint_to_scalar(zp_elem_a.clone());
+    print!("a:");
+    for e in scalar_of_a.to_bytes() {
+        print!("[{}]", e)
+    }
+    println!();
+    let scalar_of_b = bigint_to_scalar(zp_elem_b.clone());
+    print!("b:");
+    for e in scalar_of_b.to_bytes() {
+        print!("[{}]", e)
+    }
+    println!();
+    let scalar_of_c = bigint_to_scalar(zp_elem_c.clone());
+    print!("c:");
+    for e in scalar_of_c.to_bytes() {
+        print!("[{}]", e)
+    }
+    println!();
+    let scalar_of_d = bigint_to_scalar(not_zp_elem_d.clone());
+    print!("d:");
+    for e in scalar_of_d.to_bytes() {
+        print!("[{}]", e)
+    }
+    println!();
+    let a_pk = PublicKey::<NistP256>::from_secret_scalar(&scalar_of_a);
+    let b_pk = PublicKey::<NistP256>::from_secret_scalar(&scalar_of_b);
+    let c_pk = PublicKey::<NistP256>::from_secret_scalar(&scalar_of_c);
+    let d_pk = PublicKey::<NistP256>::from_secret_scalar(&scalar_of_d);
+    let c_direct_point = c_pk.to_projective();
+    let d_direct_point = d_pk.to_projective();
 
     // println!("Printing point directly created from c");
     // print_elliptic_curve_point(&c_direct_point);
     // println!();
 
-    let point_of_a = generator.clone().mul(bigint_to_scalar(zp_elem_a.clone()));
-    let point_of_b = generator.clone().mul(bigint_to_scalar(zp_elem_b.clone()));
-
-    let c_added_point = point_of_a.add(&point_of_b);
+    let c_added_point = a_pk.to_projective().add(&b_pk.to_projective());
 
     // println!("Printing point made by adding points created from a and b");
     // print_elliptic_curve_point(&c_added_point);
     // println!();
 
     let is_equal = c_added_point.eq(&c_direct_point);
-    assert!(is_equal)
+    let is_equal_d = c_added_point.eq(&d_direct_point);
+    println!("c: {}", is_equal);
+    println!("d: {}", is_equal_d);
+    assert!(is_equal);
 }
 
 fn _gen_fixed_elliptical_curve_prime_to_file() {
@@ -86,7 +117,7 @@ fn _gen_fixed_elliptical_curve_prime_to_file() {
 
     let term3 = two.pow(96);
 
-    let prime = term0 - term1 + term2 + term3 - &one;
+    let prime = term0 - term1 + term2 + term3 - one;
     let prime_field = ZpField::new_from_prime(prime, 256);
     prime_field.struct_to_file("zp_field_p256.txt");
 }
