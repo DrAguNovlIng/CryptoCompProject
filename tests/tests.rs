@@ -6,9 +6,10 @@ use cc::bedoza::zp_field::ZpField;
 use num_bigint::BigInt;
 use alphabet::*;
 
+use p256::elliptic_curve::scalar::FromUintUnchecked;
 use p256::elliptic_curve::sec1::ToEncodedPoint;
-use p256::elliptic_curve::{NonZeroScalar, PublicKey};
-use p256::{NistP256, U256};
+use p256::elliptic_curve::{NonZeroScalar, PublicKey, Scalar, ScalarPrimitive};
+use p256::{NistP256, ProjectivePoint, U256};
 use num_traits::One;
 
 fn load_groups() -> (Group, ZpField) {
@@ -34,13 +35,11 @@ fn pad_to_32_bytes_big_endian(value: BigInt) -> Vec<u8> {
     bytes
 }
 
-fn bigint_to_scalar(value: BigInt) -> NonZeroScalar<NistP256> {
-    let maybe= NonZeroScalar::<NistP256>::from_uint(U256::from_be_slice(&pad_to_32_bytes_big_endian(value.clone())));
-    if maybe.is_none().into() {
-        panic!("Failed to convert BigInt to scalar, value was: {:?}", value);
-    } else {
-        maybe.unwrap()
-    }
+fn bigint_to_scalar(value: BigInt) -> Scalar<NistP256> {
+    let u256_int = U256::from_be_slice(&pad_to_32_bytes_big_endian(value.clone()));
+    let primitive = ScalarPrimitive::<NistP256>::from_uint_unchecked(u256_int);
+    let nist_scalar= Scalar::<NistP256>::from(primitive);
+    nist_scalar    
 }
 
 #[test]
@@ -48,10 +47,10 @@ fn test_curve_homomorphism() {
     let (_common_group, zp_field) = load_groups();
 
     //a+b = c
-    let zp_elem_a = zp_field.create_field_element(BigInt::from(2));
-    let zp_elem_b = zp_field.create_field_element(BigInt::from(4));
+    let zp_elem_a = zp_field.create_field_element(BigInt::from(3));
+    let zp_elem_b = zp_field.create_field_element(BigInt::from(-2));
     let zp_elem_c = zp_field.add(zp_elem_a.clone(), zp_elem_b.clone());
-    let not_zp_elem_d = zp_field.add(zp_elem_a.clone(), zp_elem_b.clone());//zp_elem_a.clone() + zp_elem_b.clone(); //I.e not mod p
+    let not_zp_elem_d = zp_elem_a.clone() + zp_elem_b.clone(); //I.e not mod p
 
     println!("a+b = c in z_p");
     println!("a: {}", zp_elem_a);
@@ -81,10 +80,10 @@ fn test_curve_homomorphism() {
         print!("[{}]", e)
     }
     println!();
-    let a_pk = PublicKey::<NistP256>::from_secret_scalar(&scalar_of_a);
-    let b_pk = PublicKey::<NistP256>::from_secret_scalar(&scalar_of_b);
-    let c_pk = PublicKey::<NistP256>::from_secret_scalar(&scalar_of_c);
-    let d_pk = PublicKey::<NistP256>::from_secret_scalar(&scalar_of_d);
+    let a_pk = PublicKey::<NistP256>::from_secret_scalar(&NonZeroScalar::new(scalar_of_a).unwrap());
+    let b_pk = PublicKey::<NistP256>::from_secret_scalar(&NonZeroScalar::new(scalar_of_b).unwrap());
+    let c_pk = PublicKey::<NistP256>::from_secret_scalar(&NonZeroScalar::new(scalar_of_c).unwrap());
+    let d_pk = PublicKey::<NistP256>::from_secret_scalar(&NonZeroScalar::new(scalar_of_d).unwrap());
     let c_direct_point = c_pk.to_projective();
     let d_direct_point = d_pk.to_projective();
 
