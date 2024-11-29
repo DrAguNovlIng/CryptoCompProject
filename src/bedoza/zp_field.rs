@@ -46,7 +46,7 @@ impl ZpField {
     }
 
     //Generates a random element in the field, this is done by repeatedly trials such that the output is uniformly random
-    pub fn generate_random_element(&mut self) -> ZpFieldElement {
+    pub fn generate_random_element(&self) -> ZpFieldElement {
         for _ in 0..10000 {
             let rng = &mut rand::thread_rng();
             let random_bits: BigUint = RandomBits::new(self.size_in_bits).sample(rng);

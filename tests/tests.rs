@@ -8,11 +8,9 @@ use num_bigint::BigInt;
 use alphabet::*;
 
 use p256::elliptic_curve::group::Group as P256Group;
-use p256::elliptic_curve::point::AffineCoordinates;
 use p256::elliptic_curve::scalar::FromUintUnchecked;
 use p256::elliptic_curve::sec1::ToEncodedPoint;
-use p256::{Scalar, U256};
-use p256::elliptic_curve::bigint::Encoding;
+use p256::{elliptic_curve, Scalar, U256};
 use num_traits::One;
 
 fn load_groups() -> (Group, ZpField) {
@@ -22,22 +20,6 @@ fn load_groups() -> (Group, ZpField) {
     // let zp_field = ZpField::struct_from_file("zp_field2048.txt");
     // let zp_field = ZpField::struct_from_file("zp_binary.txt");
     (common_group, zp_field)
-}
-#[test]
-fn test_curve() {
-    let generator = p256::ProjectivePoint::generator();
-
-    let affine_point = generator.to_affine();
-    println!("Normal x: {:?}",affine_point.x());
-
-    let affine_point_encoded = affine_point.to_encoded_point(false);
-    println!("Encoded point x: {:?}",affine_point_encoded.x());
-    println!("Encoded point y: {:?}",affine_point_encoded.y());
-
-    let some_element = generator.mul(Scalar::from(2u32));
-    let affine_point2 = some_element.to_affine();
-    println!("Normal x times 2: {:?}",affine_point2.x());
-
 }
 
 fn print_elliptic_curve_point(point: &p256::ProjectivePoint) {
@@ -59,52 +41,54 @@ fn bigint_to_scalar(value: BigInt) -> Scalar {
 }
 
 #[test]
-fn test_ecg_share() {
+fn test_curve_homomorphism() {
     let generator = p256::ProjectivePoint::generator();
-    let (_common_group, mut zp_field) = load_groups();
+    
+    let (_common_group, zp_field) = load_groups();
 
-    let zp_elem_73 = zp_field.create_field_element(BigInt::from(73));
-    let direct_elip_element = generator.mul(bigint_to_scalar(zp_elem_73.clone()));
+    //a+b = c
+    let zp_elem_a = zp_field.create_field_element(BigInt::from(-1));
+    let zp_elem_b = zp_field.create_field_element(BigInt::from(-2));
+    let zp_elem_c = zp_field.add(zp_elem_a.clone(), zp_elem_b.clone());
 
-    print_elliptic_curve_point(&direct_elip_element);
+    println!("a+b = c in z_p");
+    println!("a: {}", zp_elem_a);
+    println!("b: {}", zp_elem_b);
+    println!("c: {}", zp_elem_c);
+    let c_direct_point = generator.clone().mul(bigint_to_scalar(zp_elem_c.clone()));
 
-    let a_alice_value = zp_field.generate_random_element();
-    let a_bob_value = zp_field.add(zp_elem_73.clone(), -a_alice_value.clone());
+    // println!("Printing point directly created from c");
+    // print_elliptic_curve_point(&c_direct_point);
+    // println!();
 
-    let alice_point = generator.mul(bigint_to_scalar(a_alice_value.clone()));
-    let bob_point = generator.mul(bigint_to_scalar(a_bob_value.clone()));
+    let point_of_a = generator.clone().mul(bigint_to_scalar(zp_elem_a.clone()));
+    let point_of_b = generator.clone().mul(bigint_to_scalar(zp_elem_b.clone()));
 
-    let added_point = alice_point.add(&bob_point);
+    let c_added_point = point_of_a.add(&point_of_b);
 
-    print_elliptic_curve_point(&added_point);
+    // println!("Printing point made by adding points created from a and b");
+    // print_elliptic_curve_point(&c_added_point);
+    // println!();
 
-    let is_equal = added_point.eq(&direct_elip_element);
-
-    println!("Is equal: {}", is_equal); //This is not equal, find out why
+    let is_equal = c_added_point.eq(&c_direct_point);
+    assert!(is_equal)
 }
-
 
 fn _gen_fixed_elliptical_curve_prime_to_file() {
     let two = BigInt::from(2);
     let one = BigInt::one();
 
-    // Compute 2^32 - 1
-    let two_32_minus_1 = (&two.pow(32)) - &one;
+    let term0 = two.pow(256);
 
-    // Compute 2^224 * (2^32 - 1)
-    let term1 = (&two.pow(224)) * &two_32_minus_1;
+    let term1 = two.pow(224);
 
-    // Compute 2^192
     let term2 = two.pow(192);
 
-    // Compute 2^96
     let term3 = two.pow(96);
 
-    // Compute p = 2^224 * (2^32 - 1) + 2^192 + 2^96 - 1
-    let prime = term1 + term2 + term3 - &one;
+    let prime = term0 - term1 + term2 + term3 - &one;
     let prime_field = ZpField::new_from_prime(prime, 256);
     prime_field.struct_to_file("zp_field_p256.txt");
-
 }
 
 fn _gen_zp_field_to_file() {
@@ -170,7 +154,7 @@ fn ot_correctness_test_2() {
 
 #[test]
 fn test_zp_field() {
-    let mut zp_field = load_groups().1;
+    let zp_field = load_groups().1;
     for _ in 0..1000 {
         let random_element = zp_field.generate_random_element();
         assert!(random_element < zp_field.p);
