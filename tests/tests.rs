@@ -14,7 +14,7 @@ use num_traits::One;
 
 fn load_groups() -> (Group, ZpField) {
     let common_group = Group::struct_from_file("group512.txt");
-    let zp_field = ZpField::struct_from_file("zp_field_p256.txt");
+    let zp_field = ZpField::struct_from_file("zp_field_p256_n.txt");
 
     // let zp_field = ZpField::struct_from_file("zp_field2048.txt");
     // let zp_field = ZpField::struct_from_file("zp_binary.txt");
@@ -41,6 +41,7 @@ fn bigint_to_scalar(value: BigInt) -> Scalar<NistP256> {
     let nist_scalar= Scalar::<NistP256>::from(primitive);
     nist_scalar    
 }
+
 
 #[test]
 fn test_curve_homomorphism() {
@@ -105,6 +106,7 @@ fn test_curve_homomorphism() {
 }
 
 fn _gen_fixed_elliptical_curve_prime_to_file() {
+    //THIS IS WRONG! The prime is not the order of the curve, (even though it is used in the elliptical curve)
     let two = BigInt::from(2);
     let one = BigInt::one();
 
@@ -119,6 +121,14 @@ fn _gen_fixed_elliptical_curve_prime_to_file() {
     let prime = term0 - term1 + term2 + term3 - one;
     let prime_field = ZpField::new_from_prime(prime, 256);
     prime_field.struct_to_file("zp_field_p256.txt");
+}
+
+#[test]
+fn _gen_fixed_elliptical_curve_order_to_file() {
+    //Order of the curve in the p256 elliptical curve in hex is 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
+    let order = BigInt::parse_bytes(b"ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551", 16).unwrap();
+    let prime_field = ZpField::new_from_prime(order, 256);
+    prime_field.struct_to_file("zp_field_p256_n.txt");
 }
 
 fn _gen_zp_field_to_file() {
