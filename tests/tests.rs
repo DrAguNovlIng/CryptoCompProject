@@ -6,6 +6,8 @@ use cc::bedoza::zp_field::ZpField;
 use num_bigint::BigInt;
 use alphabet::*;
 
+use miller_rabin::is_prime;
+
 use p256::elliptic_curve::scalar::FromUintUnchecked;
 use p256::elliptic_curve::sec1::ToEncodedPoint;
 use p256::elliptic_curve::{NonZeroScalar, PublicKey, Scalar, ScalarPrimitive};
@@ -127,7 +129,10 @@ fn _gen_fixed_elliptical_curve_prime_to_file() {
 fn _gen_fixed_elliptical_curve_order_to_file() {
     //Order of the curve in the p256 elliptical curve in hex is 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
     let order = BigInt::parse_bytes(b"ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551", 16).unwrap();
-    let prime_field = ZpField::new_from_prime(order, 256);
+    let prime_field = ZpField::new_from_prime(order.clone(), 256);
+    
+    //Santity check, the order is prime
+    assert!(is_prime(&order.to_biguint().unwrap(), 18));
     prime_field.struct_to_file("zp_field_p256_n.txt");
 }
 
