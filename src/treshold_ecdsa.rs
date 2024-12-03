@@ -2,8 +2,11 @@ pub mod ot;
 pub mod bedoza;
 pub mod prime_functions;
 
-use bedoza::{zp_field::ZpField, Bedoza, party::ShareName};
+use bedoza::{party::ShareName, zp_field::{ZpField, ZpFieldElement}, Bedoza};
 use ot::elgamal::Group;
+use p256::ProjectivePoint;
+
+type PublicKey = ProjectivePoint;
 
 pub struct ThresholdECDSA {
     bedoza: Bedoza,
@@ -17,20 +20,24 @@ impl ThresholdECDSA {
     }
 
 
-    //Generate a keypair for a specific user
-    pub fn gen_keypair(&mut self) {
+    //Generate a keypair for a specific user, i.e. ([sk_j], pk_j)
+    pub fn gen_keypair(&mut self) -> (ShareName, PublicKey) {
         todo!()
     }
 
-    //The user independent preprocessing step, the output is a tuple with a secret shared point k, and a secret shared Zp field element k^-1
+    //The user independent preprocessing step, the output is a tuple (<k>, [k^-1])
     pub fn user_independent_preprocessing(&mut self) -> (ShareName, ShareName) {
         todo!()
     }
 
-    //The user dependent preprocessing step, the output is a tuple (k, k^-1, sk_j')
-    pub fn user_dependent_preprocessing(&mut self, sk_j: ShareName) -> (ShareName, ShareName, ShareName) {
+    //The user dependent preprocessing step, the output is a tuple (<k>, [k^-1], [sk_j'])
+    pub fn user_dependent_preprocessing(&mut self, sk_j: ShareName, k: ShareName, k_inv: ShareName) -> (ShareName, ShareName, ShareName) {
         todo!()
     }
 
-    //Signing a message M using a preproccesed tuple (k, k^-1, sk_j')
+    //Signing a message M using a preproccesed tuple (k, k^-1, sk_j'), the output is a signature (r,s)
+    pub fn sign(&mut self, k: ShareName, k_inv: ShareName, sk_j: ShareName, message: &str) -> (ZpFieldElement, ProjectivePoint) {
+        todo!()
+    }
+
 }
