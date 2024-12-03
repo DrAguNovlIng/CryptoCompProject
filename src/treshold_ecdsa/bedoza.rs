@@ -1,10 +1,10 @@
 pub mod zp_field;
 pub mod ec_helpers;
-mod party;
+pub mod party;
 
-use crate::ot::elgamal::Group;
-use crate::bedoza::zp_field::{ZpField, ZpFieldElement};
-use crate::bedoza::party::{Party, ShareName};
+use crate::treshold_ecdsa::ot::elgamal::Group;
+use crate::treshold_ecdsa::bedoza::zp_field::{ZpField, ZpFieldElement};
+use crate::treshold_ecdsa::bedoza::party::{Party, ShareName};
 use alphabet::*;
 use num_bigint::BigInt;
 use p256::ProjectivePoint;

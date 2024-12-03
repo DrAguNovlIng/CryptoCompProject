@@ -1,5 +1,5 @@
-use crate::ot::{elgamal::Group, Chooser, Producer};
-use crate::bedoza::zp_field::{ZpField, ZpFieldElement};
+use crate::treshold_ecdsa::ot::{elgamal::Group, Chooser, Producer};
+use crate::treshold_ecdsa::bedoza::zp_field::{ZpField, ZpFieldElement};
 use num_bigint::BigInt;
 use p256::ProjectivePoint;
 use std::collections::HashMap;

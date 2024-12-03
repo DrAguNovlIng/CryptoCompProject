@@ -1,9 +1,9 @@
 extern crate cc;
 
-use cc::bedoza::{self, ec_helpers};
+use cc::treshold_ecdsa::bedoza::{self, ec_helpers};
 use cc::treshold_ecdsa::ThresholdECDSA;
-use cc::{ot::elgamal::Group, ot::elgamal::ElGamal};
-use cc::bedoza::zp_field::ZpField;
+use cc::treshold_ecdsa::{ot::elgamal::Group, ot::elgamal::ElGamal};
+use cc::treshold_ecdsa::bedoza::zp_field::ZpField;
 use num_bigint::BigInt;
 use alphabet::*;
 
@@ -45,8 +45,8 @@ fn el_gamal_correctness_test() {
 #[test]
 fn ot_correctness_test_1() {
     let common_group = load_groups().0;
-    let mut chooser = cc::ot::Chooser::new(common_group.clone(), 2);
-    let mut producer = cc::ot::Producer::new(common_group.clone(), 2, |i, j| {
+    let mut chooser = cc::treshold_ecdsa::ot::Chooser::new(common_group.clone(), 2);
+    let mut producer = cc::treshold_ecdsa::ot::Producer::new(common_group.clone(), 2, |i, j| {
         BigInt::from(i*j) //I.e. the AND function
     });
 
@@ -60,8 +60,8 @@ fn ot_correctness_test_1() {
 #[test]
 fn ot_correctness_test_2() {
     let common_group = load_groups().0;
-    let mut chooser = cc::ot::Chooser::new(common_group.clone(), 2);
-    let mut producer = cc::ot::Producer::new(common_group.clone(), 2, |i, j| {
+    let mut chooser = cc::treshold_ecdsa::ot::Chooser::new(common_group.clone(), 2);
+    let mut producer = cc::treshold_ecdsa::ot::Producer::new(common_group.clone(), 2, |i, j| {
         BigInt::from(i*j) //I.e. the AND function
     });
 

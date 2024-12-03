@@ -1,6 +1,6 @@
 pub mod elgamal;
 
-use crate::ot::elgamal::{ElGamal, PublicKey, Plaintext, SecretKey, Ciphertext, Group};
+use elgamal::{ElGamal, PublicKey, Plaintext, SecretKey, Ciphertext, Group};
 use num_bigint::BigInt;
 
 pub struct Chooser {

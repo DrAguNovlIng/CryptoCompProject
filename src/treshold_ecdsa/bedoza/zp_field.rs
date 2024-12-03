@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::{fs::File, io::Write};
 use rand::prelude::Distribution;
 use num_bigint::{BigInt, BigUint, RandomBits, ToBigInt};
-use crate::prime_functions::generate_prime;
+use crate::treshold_ecdsa::prime_functions::generate_prime;
 
 pub type ZpFieldElement = BigInt;
 

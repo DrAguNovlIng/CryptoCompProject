@@ -3,7 +3,7 @@ use rand::prelude::Distribution;
 use num_bigint::{BigInt, BigUint, RandomBits, ToBigInt};
 use miller_rabin::is_prime;
 use serde::{Deserialize, Serialize};
-use crate::prime_functions::generate_prime;
+use crate::treshold_ecdsa::prime_functions::generate_prime;
 
 
 /*
