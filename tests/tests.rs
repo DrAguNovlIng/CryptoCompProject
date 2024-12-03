@@ -11,34 +11,9 @@ use p256::ProjectivePoint;
 fn load_groups() -> (Group, ZpField) {
     let common_group = Group::struct_from_file("group512.txt");
     let zp_field = ZpField::struct_from_file("zp_field_p256_n.txt");
-
-    // let zp_field = ZpField::struct_from_file("zp_field2048.txt");
-    // let zp_field = ZpField::struct_from_file("zp_binary.txt");
     (common_group, zp_field)
 }
 
-
-#[test]
-fn test_ec_share_homomorphism() {
-    let (common_group, zp_field) = load_groups();
-    let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
-
-    for _ in 0..20 {
-        let zp_elem = zp_field.generate_random_element();
-        
-        //Creating point diretly from scalar
-        let scalar = ec_helpers::bigint_to_scalar(zp_elem.clone());
-        let directly_created_point = ProjectivePoint::GENERATOR * scalar;
-
-        //Creating point by using shares
-        let share_name = bedoza.create_secret_sharing_by_alice(zp_elem.clone());
-        bedoza.convert_ec(share_name.clone());
-        let opened_share_point = bedoza.open_ec(share_name.clone());
-
-        //check if the points are equal
-        assert_eq!(directly_created_point, opened_share_point);
-    }
-}
 
 fn _manual_test_name_generator() {
     alphabet!(LATIN = "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
@@ -103,7 +78,6 @@ fn test_zp_field() {
         let random_element = zp_field.generate_random_element();
         assert!(random_element < zp_field.p);
     }
-    zp_field.struct_to_file("zp_field2048.txt");
 }
 
 #[test]
@@ -228,5 +202,28 @@ fn test_multiplication() {
         let name_c = bedoza.mul(name_a.clone(), name_b.clone());
         let opened_share_value = bedoza.open(name_c.clone());
         assert_eq!(zp_field.create_field_element(BigInt::from(3*i*i)), opened_share_value);
+    }
+}
+
+
+#[test]
+fn test_ec_share_homomorphism() {
+    let (common_group, zp_field) = load_groups();
+    let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
+
+    for _ in 0..20 {
+        let zp_elem = zp_field.generate_random_element();
+        
+        //Creating point diretly from scalar
+        let scalar = ec_helpers::bigint_to_scalar(zp_elem.clone());
+        let directly_created_point = ProjectivePoint::GENERATOR * scalar;
+
+        //Creating point by using shares
+        let share_name = bedoza.create_secret_sharing_by_alice(zp_elem.clone());
+        bedoza.convert_ec(share_name.clone());
+        let opened_share_point = bedoza.open_ec(share_name.clone());
+
+        //check if the points are equal
+        assert_eq!(directly_created_point, opened_share_point);
     }
 }
