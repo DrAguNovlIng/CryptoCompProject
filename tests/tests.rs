@@ -1,18 +1,12 @@
 extern crate cc;
 
-use cc::bedoza;
+use cc::bedoza::{self, ec_helpers};
 use cc::{ot::elgamal::Group, ot::elgamal::ElGamal};
 use cc::bedoza::zp_field::ZpField;
 use num_bigint::BigInt;
 use alphabet::*;
 
-use miller_rabin::is_prime;
-
-use p256::elliptic_curve::scalar::FromUintUnchecked;
-use p256::elliptic_curve::sec1::ToEncodedPoint;
-use p256::elliptic_curve::{NonZeroScalar, PublicKey, Scalar, ScalarPrimitive};
-use p256::{NistP256, U256};
-use num_traits::One;
+use p256::ProjectivePoint;
 
 fn load_groups() -> (Group, ZpField) {
     let common_group = Group::struct_from_file("group512.txt");
@@ -23,63 +17,27 @@ fn load_groups() -> (Group, ZpField) {
     (common_group, zp_field)
 }
 
-fn print_elliptic_curve_point(point: &p256::ProjectivePoint) {
-    let encoded_point = point.to_affine().to_encoded_point(false);
-    println!("Encoded point x: {:?}",encoded_point.x());
-    println!("Encoded point y: {:?}",encoded_point.y());
-}
-
-fn pad_to_32_bytes_big_endian(value: BigInt) -> Vec<u8> {
-    let mut bytes = value.to_bytes_be().1;
-    while bytes.len() < 32 {
-        bytes.insert(0, 0); // Prepend zeroes to reach 32 bytes
-    }
-    bytes
-}
-
-fn bigint_to_scalar(value: BigInt) -> Scalar<NistP256> {
-    let u256_int = U256::from_be_slice(&pad_to_32_bytes_big_endian(value.clone()));
-    let primitive = ScalarPrimitive::<NistP256>::from_uint_unchecked(u256_int);
-    let nist_scalar= Scalar::<NistP256>::from(primitive);
-    nist_scalar    
-}
 
 #[test]
-fn test_ec_share_properties() {
-    //Creating point diretly from scalar
+fn test_ec_share_homomorphism() {
     let (common_group, zp_field) = load_groups();
-    let zp_elem = zp_field.create_field_element(BigInt::from(3));
-    let scalar = bigint_to_scalar(zp_elem.clone());
-    let pk = PublicKey::<NistP256>::from_secret_scalar(&NonZeroScalar::new(scalar).unwrap());
-    let directly_created_point = pk.to_projective();
-
-    //Creating point by using shares
     let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
-    let share_name = bedoza.create_secret_sharing_by_alice(zp_elem.clone());
-    bedoza.convert_ec(share_name.clone());
-    let opened_share_point = bedoza.open_ec(share_name.clone());
 
-    //check if the points are equal
-    println!("Directly created point:");
-    print_elliptic_curve_point(&directly_created_point);
-    println!("Opened share point:");
-    print_elliptic_curve_point(&opened_share_point);
-    assert_eq!(directly_created_point, opened_share_point);
-}
+    for _ in 0..20 {
+        let zp_elem = zp_field.generate_random_element();
+        
+        //Creating point diretly from scalar
+        let scalar = ec_helpers::bigint_to_scalar(zp_elem.clone());
+        let directly_created_point = ProjectivePoint::GENERATOR * scalar;
 
-fn _gen_fixed_elliptical_curve_order_to_file() {
-    //Order of the curve in the p256 elliptical curve in hex is 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
-    let order = BigInt::parse_bytes(b"ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551", 16).unwrap();
-    let prime_field = ZpField::new_from_prime(order.clone(), 256);
-    
-    //Santity check, the order is prime
-    assert!(is_prime(&order.to_biguint().unwrap(), 18));
-    prime_field.struct_to_file("zp_field_p256_n.txt");
-}
+        //Creating point by using shares
+        let share_name = bedoza.create_secret_sharing_by_alice(zp_elem.clone());
+        bedoza.convert_ec(share_name.clone());
+        let opened_share_point = bedoza.open_ec(share_name.clone());
 
-fn _gen_zp_field_to_file() {
-    let prime_field = ZpField::new(2048);
-    prime_field.struct_to_file("zp_field2048.txt");
+        //check if the points are equal
+        assert_eq!(directly_created_point, opened_share_point);
+    }
 }
 
 fn _manual_test_name_generator() {

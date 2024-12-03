@@ -1,4 +1,5 @@
 pub mod zp_field;
+pub mod ec_helpers;
 mod party;
 
 use crate::ot::elgamal::Group;

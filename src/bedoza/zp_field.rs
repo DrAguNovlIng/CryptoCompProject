@@ -71,3 +71,22 @@ impl ZpField {
     }
     
 }
+
+pub fn gen_zp_field_to_file(file_name: &str) {
+    let mut full_file_name = file_name.to_owned();
+    let file_type = ".txt".to_owned();
+    full_file_name.push_str(&file_type);
+    let prime_field = ZpField::new(2048);
+    prime_field.struct_to_file(full_file_name.as_str());
+}
+
+pub fn gen_fixed_elliptical_curve_order_to_file(file_name: &str) {
+    let mut full_file_name = file_name.to_owned();
+    let file_type = ".txt".to_owned();
+    full_file_name.push_str(&file_type);
+
+    //Order of the curve in the p256 elliptical curve in hex is 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
+    let order = BigInt::parse_bytes(b"ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551", 16).unwrap();
+    let prime_field = ZpField::new_from_prime(order.clone(), 256);
+    prime_field.struct_to_file(full_file_name.as_str());
+}

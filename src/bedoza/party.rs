@@ -1,9 +1,10 @@
 use crate::ot::{elgamal::Group, Chooser, Producer};
 use crate::bedoza::zp_field::{ZpField, ZpFieldElement};
 use num_bigint::BigInt;
-use p256::elliptic_curve::scalar::FromUintUnchecked;
-use p256::{ProjectivePoint, Scalar, U256};
+use p256::ProjectivePoint;
 use std::collections::HashMap;
+
+use super::ec_helpers;
 
 pub type ShareName = String;
 
@@ -105,27 +106,12 @@ impl Party {
         }
     }
 
-    
-    fn pad_to_32_bytes_big_endian(&self, value: &BigInt) -> Vec<u8> {
-        let mut bytes = value.to_bytes_be().1;
-        while bytes.len() < 32 {
-            bytes.insert(0, 0); //Prepend zeroes to reach 32 bytes
-        }
-        bytes
-    }
-
-    fn bigint_to_scalar(&self, value: BigInt) -> Scalar {
-        let u256_int = U256::from_be_slice(&self.pad_to_32_bytes_big_endian(&value));
-        let result = Scalar::from_uint_unchecked(u256_int);
-        result
-    }
-
     //Converts an already shared value in Zp to an EC share
     pub fn convert_to_ec_shares(&mut self, share: ShareName) {
         let maybe_value = self.zp_shares.get_key_value(&share); //TODO Check exsistence in map properly
         match maybe_value {
             Some((_, value)) => {
-                let scalar = self.bigint_to_scalar(value.clone());
+                let scalar = ec_helpers::bigint_to_scalar(value.clone());
                 let point = ProjectivePoint::GENERATOR * scalar;
                 self.ec_shares.insert(share, point);
             }
