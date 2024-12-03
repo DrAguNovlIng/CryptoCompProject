@@ -6,6 +6,7 @@ use crate::bedoza::zp_field::{ZpField, ZpFieldElement};
 use crate::bedoza::party::{Party, ShareName};
 use alphabet::*;
 use num_bigint::BigInt;
+use p256::ProjectivePoint;
 
 
 /*
@@ -59,7 +60,7 @@ impl Bedoza {
     }
 
     //Opens a shared value
-    pub fn open(&mut self, secret_to_open: ShareName) -> ZpFieldElement {
+    pub fn open(&self, secret_to_open: ShareName) -> ZpFieldElement {
         let alice_share = self.alice.open_share(secret_to_open.clone());
         let bob_share = self.bob.open_share(secret_to_open.clone());
         self.zp_field.add(alice_share, bob_share)
@@ -154,5 +155,19 @@ impl Bedoza {
         let wexdy: ShareName = self.add(wex, dy);
         let z: ShareName = self.add_const(wexdy, -ed);
         z
+    }
+
+    //Converts a shared value from zp to elliptic curve, under the same name
+    pub fn convert_ec(&mut self, a: ShareName) {
+        //We convert by simply calling convert on both parties, since we have homomorphic properties between the groups
+        self.alice.convert_to_ec_shares(a.clone());
+        self.bob.convert_to_ec_shares(a);
+    }
+
+    //Opens a shared elliptic curve point
+    pub fn open_ec(&self, a: ShareName) -> ProjectivePoint {
+        let alice_share = self.alice.open_ec_share(a.clone());
+        let bob_share = self.bob.open_ec_share(a);
+        alice_share + bob_share //note this is addition in the elliptic curve group
     }
 }

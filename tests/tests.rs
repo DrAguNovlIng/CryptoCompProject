@@ -11,7 +11,7 @@ use miller_rabin::is_prime;
 use p256::elliptic_curve::scalar::FromUintUnchecked;
 use p256::elliptic_curve::sec1::ToEncodedPoint;
 use p256::elliptic_curve::{NonZeroScalar, PublicKey, Scalar, ScalarPrimitive};
-use p256::{NistP256, ProjectivePoint, U256};
+use p256::{NistP256, U256};
 use num_traits::One;
 
 fn load_groups() -> (Group, ZpField) {
@@ -44,88 +44,29 @@ fn bigint_to_scalar(value: BigInt) -> Scalar<NistP256> {
     nist_scalar    
 }
 
-
 #[test]
-fn test_curve_homomorphism() {
-    let (_common_group, zp_field) = load_groups();
+fn test_ec_share_properties() {
+    //Creating point diretly from scalar
+    let (common_group, zp_field) = load_groups();
+    let zp_elem = zp_field.create_field_element(BigInt::from(3));
+    let scalar = bigint_to_scalar(zp_elem.clone());
+    let pk = PublicKey::<NistP256>::from_secret_scalar(&NonZeroScalar::new(scalar).unwrap());
+    let directly_created_point = pk.to_projective();
 
-    //a+b = c
-    let zp_elem_a = zp_field.create_field_element(BigInt::from(3));
-    let zp_elem_b = zp_field.create_field_element(BigInt::from(-2));
-    let zp_elem_c = zp_field.add(zp_elem_a.clone(), zp_elem_b.clone());
-    let not_zp_elem_d = zp_elem_a.clone() + zp_elem_b.clone(); //I.e not mod p
+    //Creating point by using shares
+    let mut bedoza = bedoza::Bedoza::new(common_group.clone(), zp_field.clone());
+    let share_name = bedoza.create_secret_sharing_by_alice(zp_elem.clone());
+    bedoza.convert_ec(share_name.clone());
+    let opened_share_point = bedoza.open_ec(share_name.clone());
 
-    println!("a+b = c in z_p");
-    println!("a: {}", zp_elem_a);
-    println!("b: {}", zp_elem_b);
-    println!("c: {}", zp_elem_c);
-    let scalar_of_a = bigint_to_scalar(zp_elem_a.clone());
-    print!("a:");
-    for e in scalar_of_a.to_bytes() {
-        print!("[{}]", e)
-    }
-    println!();
-    let scalar_of_b = bigint_to_scalar(zp_elem_b.clone());
-    print!("b:");
-    for e in scalar_of_b.to_bytes() {
-        print!("[{}]", e)
-    }
-    println!();
-    let scalar_of_c = bigint_to_scalar(zp_elem_c.clone());
-    print!("c:");
-    for e in scalar_of_c.to_bytes() {
-        print!("[{}]", e)
-    }
-    println!();
-    let scalar_of_d = bigint_to_scalar(not_zp_elem_d.clone());
-    print!("d:");
-    for e in scalar_of_d.to_bytes() {
-        print!("[{}]", e)
-    }
-    println!();
-    let a_pk = PublicKey::<NistP256>::from_secret_scalar(&NonZeroScalar::new(scalar_of_a).unwrap());
-    let b_pk = PublicKey::<NistP256>::from_secret_scalar(&NonZeroScalar::new(scalar_of_b).unwrap());
-    let c_pk = PublicKey::<NistP256>::from_secret_scalar(&NonZeroScalar::new(scalar_of_c).unwrap());
-    let d_pk = PublicKey::<NistP256>::from_secret_scalar(&NonZeroScalar::new(scalar_of_d).unwrap());
-    let c_direct_point = c_pk.to_projective();
-    let d_direct_point = d_pk.to_projective();
-
-    // println!("Printing point directly created from c");
-    // print_elliptic_curve_point(&c_direct_point);
-    // println!();
-
-    let c_added_point = a_pk.to_projective().add(&b_pk.to_projective());
-
-    // println!("Printing point made by adding points created from a and b");
-    // print_elliptic_curve_point(&c_added_point);
-    // println!();
-
-    let is_equal = c_added_point.eq(&c_direct_point);
-    let is_equal_d = c_added_point.eq(&d_direct_point);
-    println!("c: {}", is_equal);
-    println!("d: {}", is_equal_d);
-    assert!(is_equal);
+    //check if the points are equal
+    println!("Directly created point:");
+    print_elliptic_curve_point(&directly_created_point);
+    println!("Opened share point:");
+    print_elliptic_curve_point(&opened_share_point);
+    assert_eq!(directly_created_point, opened_share_point);
 }
 
-fn _gen_fixed_elliptical_curve_prime_to_file() {
-    //THIS IS WRONG! The prime is not the order of the curve, (even though it is used in the elliptical curve)
-    let two = BigInt::from(2);
-    let one = BigInt::one();
-
-    let term0 = two.pow(256);
-
-    let term1 = two.pow(224);
-
-    let term2 = two.pow(192);
-
-    let term3 = two.pow(96);
-
-    let prime = term0 - term1 + term2 + term3 - one;
-    let prime_field = ZpField::new_from_prime(prime, 256);
-    prime_field.struct_to_file("zp_field_p256.txt");
-}
-
-#[test]
 fn _gen_fixed_elliptical_curve_order_to_file() {
     //Order of the curve in the p256 elliptical curve in hex is 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
     let order = BigInt::parse_bytes(b"ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551", 16).unwrap();
