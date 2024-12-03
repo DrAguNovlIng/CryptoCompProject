@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::{fs::File, io::Write};
 use rand::prelude::Distribution;
 use num_bigint::{BigInt, BigUint, RandomBits, ToBigInt};
-use crate::treshold_ecdsa::prime_functions::generate_prime;
+use crate::threshold_ecdsa::prime_functions::generate_prime;
 
 pub type ZpFieldElement = BigInt;
 
@@ -39,7 +39,12 @@ impl ZpField {
         let mut file = File::create(path).unwrap();
         file.write_all(json.as_bytes()).unwrap();
     }
-    
+
+    // Finds inverse of an element in Zp
+    pub fn find_inverse(&self, elem: ZpFieldElement) -> ZpFieldElement {
+        elem.modinv(&self.p).unwrap()
+    }
+
     //Creates a field element from a BigInt value, i.e. takes the value mod p
     pub fn create_field_element(&self, value: BigInt) -> ZpFieldElement {
         value.modpow(&BigInt::from(1u8), &self.p)
@@ -90,3 +95,4 @@ pub fn gen_fixed_elliptical_curve_order_to_file(file_name: &str) {
     let prime_field = ZpField::new_from_prime(order.clone(), 256);
     prime_field.struct_to_file(full_file_name.as_str());
 }
+

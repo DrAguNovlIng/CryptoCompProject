@@ -1,9 +1,9 @@
-use crate::treshold_ecdsa::ot::{elgamal::Group, Chooser, Producer};
-use crate::treshold_ecdsa::bedoza::zp_field::{ZpField, ZpFieldElement};
+use crate::threshold_ecdsa::ot::{elgamal::Group, Chooser, Producer};
+use crate::threshold_ecdsa::bedoza::zp_field::{ZpField, ZpFieldElement};
 use num_bigint::BigInt;
 use p256::ProjectivePoint;
 use std::collections::HashMap;
-
+use crate::threshold_ecdsa::bedoza::ec_helpers::bigint_to_scalar;
 use super::ec_helpers;
 
 pub type ShareName = String;
@@ -108,7 +108,7 @@ impl Party {
 
     //Converts an already shared value in Zp to an EC share
     pub fn convert_to_ec_shares(&mut self, share: ShareName) {
-        let maybe_value = self.zp_shares.get_key_value(&share); //TODO Check exsistence in map properly
+        let maybe_value = self.zp_shares.get_key_value(&share);
         match maybe_value {
             Some((_, value)) => {
                 let scalar = ec_helpers::bigint_to_scalar(value.clone());
@@ -131,6 +131,21 @@ impl Party {
             }
             None => {
                 panic!("Share of type EC point not found, make sure to create the share first, before opening it, i.e. using convert_to_ec_shares()")
+            }
+        }
+    }
+
+    //Multiplies a share with a constant value (ec)
+    pub fn mul_const_ec(&mut self, input_share: ShareName, output_share: ShareName, constant: ZpFieldElement) {
+        let maybe_share = self.ec_shares.get_key_value(&input_share);
+        match maybe_share {
+            Some((_, v)) => {
+                let scalar = bigint_to_scalar(constant);
+                let new_value = v * &scalar;
+                self.ec_shares.insert(output_share, new_value.clone());
+            }
+            None => {
+                panic!("Input Share not found")
             }
         }
     }

@@ -1,13 +1,15 @@
 extern crate cc;
 
-use cc::treshold_ecdsa::bedoza::{self, ec_helpers};
-use cc::treshold_ecdsa::ThresholdECDSA;
-use cc::treshold_ecdsa::{ot::elgamal::Group, ot::elgamal::ElGamal};
-use cc::treshold_ecdsa::bedoza::zp_field::ZpField;
+use cc::threshold_ecdsa::bedoza::{self, ec_helpers};
+use cc::threshold_ecdsa::ThresholdECDSA;
+use cc::threshold_ecdsa::{ot::elgamal::Group, ot::elgamal::ElGamal};
+use cc::threshold_ecdsa::bedoza::zp_field::ZpField;
 use num_bigint::BigInt;
 use alphabet::*;
 
+
 use p256::ProjectivePoint;
+use cc::threshold_ecdsa::hashing::hash_string;
 
 fn load_groups() -> (Group, ZpField) {
     let common_group = Group::struct_from_file("group512.txt");
@@ -25,6 +27,15 @@ fn _manual_test_name_generator() {
         println!("{}", name);
     }
 }
+
+#[test]
+fn test_hashing() {
+    let group = load_groups().1;
+    let hash = hash_string("test", group);
+    let hash_string = hash.to_string();
+    assert_eq!(hash_string, "11930106859436202418927189453856903629183301255253588841448898469949903964057")
+}
+
 
 #[test]
 fn el_gamal_correctness_test() {
@@ -45,8 +56,8 @@ fn el_gamal_correctness_test() {
 #[test]
 fn ot_correctness_test_1() {
     let common_group = load_groups().0;
-    let mut chooser = cc::treshold_ecdsa::ot::Chooser::new(common_group.clone(), 2);
-    let mut producer = cc::treshold_ecdsa::ot::Producer::new(common_group.clone(), 2, |i, j| {
+    let mut chooser = cc::threshold_ecdsa::ot::Chooser::new(common_group.clone(), 2);
+    let mut producer = cc::threshold_ecdsa::ot::Producer::new(common_group.clone(), 2, |i, j| {
         BigInt::from(i*j) //I.e. the AND function
     });
 
@@ -60,8 +71,8 @@ fn ot_correctness_test_1() {
 #[test]
 fn ot_correctness_test_2() {
     let common_group = load_groups().0;
-    let mut chooser = cc::treshold_ecdsa::ot::Chooser::new(common_group.clone(), 2);
-    let mut producer = cc::treshold_ecdsa::ot::Producer::new(common_group.clone(), 2, |i, j| {
+    let mut chooser = cc::threshold_ecdsa::ot::Chooser::new(common_group.clone(), 2);
+    let mut producer = cc::threshold_ecdsa::ot::Producer::new(common_group.clone(), 2, |i, j| {
         BigInt::from(i*j) //I.e. the AND function
     });
 
@@ -230,8 +241,16 @@ fn test_ec_share_homomorphism() {
 }
 
 #[test]
-fn test_threshold_ecdsa() {
+fn test_signatures() {
     let (common_group, zp_field) = load_groups();
-    let ecdsa = ThresholdECDSA::new(common_group.clone(), zp_field.clone());
-    //todo
+    let mut tecdsa = ThresholdECDSA::new(common_group.clone(), zp_field.clone());
+    let (sk, pk) = tecdsa.gen_keypair();
+    let (k, k_inv) = tecdsa.user_independent_preprocessing();
+    let (k, k_inv, sk_j_prime) = tecdsa.user_dependent_preprocessing(sk, k, k_inv);
+
+    let m = "Hello world!";
+    let s = tecdsa.sign(k, k_inv, sk_j_prime, m.clone());
+
+    assert!(tecdsa.verify_signature(pk, m, s))
 }
+

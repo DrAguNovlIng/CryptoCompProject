@@ -1,1 +1,1 @@
-pub mod treshold_ecdsa;
+pub mod threshold_ecdsa;

@@ -2,9 +2,9 @@ pub mod zp_field;
 pub mod ec_helpers;
 pub mod party;
 
-use crate::treshold_ecdsa::ot::elgamal::Group;
-use crate::treshold_ecdsa::bedoza::zp_field::{ZpField, ZpFieldElement};
-use crate::treshold_ecdsa::bedoza::party::{Party, ShareName};
+use crate::threshold_ecdsa::ot::elgamal::Group;
+use crate::threshold_ecdsa::bedoza::zp_field::{ZpField, ZpFieldElement};
+use crate::threshold_ecdsa::bedoza::party::{Party, ShareName};
 use alphabet::*;
 use num_bigint::BigInt;
 use p256::ProjectivePoint;
@@ -170,5 +170,13 @@ impl Bedoza {
         let alice_share = self.alice.open_ec_share(a.clone());
         let bob_share = self.bob.open_ec_share(a);
         alice_share + bob_share //note this is addition in the elliptic curve group
+    }
+
+    pub fn mul_const_ec(&mut self, a: ShareName, constant: ZpFieldElement) -> ShareName {
+        //both parties multiplies their share with the constant (ec)
+        let output_share = self.share_name_generator.next().unwrap();
+        self.alice.mul_const_ec(a.clone(), output_share.clone(), constant.clone());
+        self.bob.mul_const_ec(a, output_share.clone(), constant);
+        output_share
     }
 }
