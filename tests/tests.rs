@@ -1,6 +1,7 @@
 extern crate cc;
 
 use cc::bedoza::{self, ec_helpers};
+use cc::treshold_ecdsa::ThresholdECDSA;
 use cc::{ot::elgamal::Group, ot::elgamal::ElGamal};
 use cc::bedoza::zp_field::ZpField;
 use num_bigint::BigInt;
@@ -226,4 +227,11 @@ fn test_ec_share_homomorphism() {
         //check if the points are equal
         assert_eq!(directly_created_point, opened_share_point);
     }
+}
+
+#[test]
+fn test_threshold_ecdsa() {
+    let (common_group, zp_field) = load_groups();
+    let ecdsa = ThresholdECDSA::new(common_group.clone(), zp_field.clone());
+    //todo
 }

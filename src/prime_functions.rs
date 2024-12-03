@@ -2,7 +2,6 @@ use rand::prelude::Distribution;
 use num_bigint::{BigInt, BigUint, RandomBits, ToBigInt};
 use miller_rabin::is_prime;
 
-
 // Method to generate a prime, this is done by picking a random number of the desired size and using the Miller-Rabin primality test
 pub fn generate_prime(size: u64) -> BigInt {
     for _ in 0..10000 {
