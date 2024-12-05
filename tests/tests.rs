@@ -249,7 +249,7 @@ fn test_signatures() {
     let (k, k_inv, sk_j_prime) = tecdsa.user_dependent_preprocessing(sk, k, k_inv);
 
     let m = "Hello world!";
-    let s = tecdsa.sign(k, k_inv, sk_j_prime, m.clone());
+    let s = tecdsa.sign(k, k_inv, sk_j_prime, m);
 
     assert!(tecdsa.verify_signature(pk, m, s))
 }

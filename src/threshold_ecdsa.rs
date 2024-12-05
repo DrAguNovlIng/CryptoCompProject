@@ -71,11 +71,11 @@ impl ThresholdECDSA {
         let h_m = hash_string(message, self.zp_field.clone());
         let s_inv = self.zp_field.find_inverse(signature.1.clone());
         let left = ProjectivePoint::GENERATOR * bigint_to_scalar(self.zp_field.mul(h_m, s_inv.clone()));
-        let right = pk * bigint_to_scalar(self.zp_field.mul(s_inv.clone(), signature.0));
+        let right = pk * bigint_to_scalar(self.zp_field.mul(s_inv.clone(), signature.0.clone()));
         let calculated_r_x = (left + right).to_affine().x();
         let calculated_r_x_field_elem = self.zp_field.create_field_element(BigInt::from_bytes_be(Sign::Plus, calculated_r_x.as_slice()));
 
-        calculated_r_x_field_elem == signature.1
+        calculated_r_x_field_elem == signature.0
     }
 }
 
