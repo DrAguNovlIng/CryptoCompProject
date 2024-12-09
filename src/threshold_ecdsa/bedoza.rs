@@ -1,6 +1,7 @@
 pub mod zp_field;
 pub mod ec_helpers;
 pub mod party;
+mod trusted_dealer;
 
 use crate::threshold_ecdsa::ot::elgamal::Group;
 use crate::threshold_ecdsa::bedoza::zp_field::{ZpField, ZpFieldElement};
@@ -8,6 +9,7 @@ use crate::threshold_ecdsa::bedoza::party::{Party, ShareName};
 use alphabet::*;
 use num_bigint::BigInt;
 use p256::ProjectivePoint;
+use trusted_dealer::TrustedDealer;
 
 
 /*
@@ -18,6 +20,7 @@ pub struct Bedoza {
     bob: Party,
     share_name_generator: Box<dyn Iterator<Item = String>>,
     zp_field: ZpField,
+    trusted_dealer: TrustedDealer
 }
 
 impl Bedoza {
@@ -31,7 +34,8 @@ impl Bedoza {
             alice: Party::new(common_group.clone(), zp_field.clone()),
             bob: Party::new(common_group.clone(), zp_field.clone()),
             share_name_generator: Box::new(latin_alphabet_iterator),
-            zp_field: zp_field,
+            zp_field: zp_field.clone(),
+            trusted_dealer: TrustedDealer::new(zp_field)
         }
     }
 
@@ -109,30 +113,17 @@ impl Bedoza {
         let v = self.share_name_generator.next().unwrap();
         let w = self.share_name_generator.next().unwrap();
 
-        //This is implemented like we are the trusted dealer
-        let u_value = self.zp_field.generate_random_element();
-        let v_value = self.zp_field.generate_random_element();
-        let w_value = self.zp_field.mul(u_value.clone(), v_value.clone());
-        
-        //Creating the shares
-        let u_alice_value = self.zp_field.generate_random_element();
-        let u_bob_value = self.zp_field.add(u_value.clone(), -u_alice_value.clone());
-
-        let v_alice_value = self.zp_field.generate_random_element();
-        let v_bob_value = self.zp_field.add(v_value.clone(), -v_alice_value.clone());
-
-        let w_alice_value = self.zp_field.generate_random_element();
-        let w_bob_value = self.zp_field.add(w_value.clone(), -w_alice_value.clone());
+        let uvw = self.trusted_dealer.generate_uvw();
         
         //Distribution of the shares
-        self.alice.receive_secret_share(u.clone(), u_alice_value);
-        self.bob.receive_secret_share(u.clone(), u_bob_value);
+        self.alice.receive_secret_share(u.clone(), uvw.u.0);
+        self.bob.receive_secret_share(u.clone(), uvw.u.1);
         
-        self.alice.receive_secret_share(v.clone(), v_alice_value);
-        self.bob.receive_secret_share(v.clone(), v_bob_value);
+        self.alice.receive_secret_share(v.clone(), uvw.v.0);
+        self.bob.receive_secret_share(v.clone(), uvw.v.1);
 
-        self.alice.receive_secret_share(w.clone(), w_alice_value);
-        self.bob.receive_secret_share(w.clone(), w_bob_value);
+        self.alice.receive_secret_share(w.clone(), uvw.w.0);
+        self.bob.receive_secret_share(w.clone(), uvw.w.1);
 
         (u, v, w)
     }
