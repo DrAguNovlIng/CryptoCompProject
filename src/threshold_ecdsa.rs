@@ -18,7 +18,12 @@ pub struct ThresholdECDSA {
     bedoza: Bedoza,
     zp_field: ZpField,
 }
-
+/*
+    Implementation of Threashold ECDSA according to the paper
+    Note that some compuation that depends only on public information 
+    (such as opened variables) is done here in this file for simplicity.
+    In a real world scenario, both parties would compute the information themselves.
+*/
 impl ThresholdECDSA {
     pub fn new(ot_group: Group, zp_field: ZpField) -> Self {
         Self {
@@ -67,6 +72,7 @@ impl ThresholdECDSA {
     }
 
     //Verifying a signature (r,s) on a message M using a public key pk_j
+    //Note this can be done locally
     pub fn verify_signature(&self, pk: PublicKey, message: &str, signature: Signature) -> bool {
         let h_m = hash_string(message, self.zp_field.clone());
         let s_inv = self.zp_field.find_inverse(signature.1.clone());
