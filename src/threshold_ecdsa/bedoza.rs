@@ -13,7 +13,8 @@ use trusted_dealer::TrustedDealer;
 
 
 /*
-    The Bedoza Protocol Arithmetic Black-box with 2 parties using OT for RandMul. The implementation is computationally passive secure.
+    The Bedoza Protocol Arithmetic Black-box with 2 parties using Trusted Dealer for RandMul. The implementation is computationally passive secure.
+    The code inside this file represents the network and name handling of the protocol, while the parties Alice and Bob do the computation
 */
 pub struct Bedoza {
     alice: Party,
@@ -68,7 +69,8 @@ impl Bedoza {
     pub fn open(&self, secret_to_open: ShareName) -> ZpFieldElement {
         let alice_share = self.alice.open_share(secret_to_open.clone());
         let bob_share = self.bob.open_share(secret_to_open.clone());
-        self.zp_field.add(alice_share, bob_share)
+        self.zp_field.add(alice_share, bob_share) //Here we add the shares in the open
+        //This should of course be done by both parties, but we have placed it here for simplicity
     }
 
     //Adds a constant to a shared value (local computation)
@@ -161,6 +163,7 @@ impl Bedoza {
         let alice_share = self.alice.open_ec_share(a.clone());
         let bob_share = self.bob.open_ec_share(a);
         alice_share + bob_share //note this is addition in the elliptic curve group
+        //Note again we do this addition in the open for simplicity
     }
 
     pub fn mul_const_ec(&mut self, a: ShareName, constant: ZpFieldElement) -> ShareName {
